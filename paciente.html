@@ -448,7 +448,7 @@ function doLogin(){
   // Fallback: match by PAC-XXX pattern where XXX is part of their ID
   if(!found){
     found = pacs.find(p => {
-      const autoCode = 'PAC-' + (p.id||'').slice(-3).toUpperCase();
+      const autoCode = 'PAC-' + (p.id||'').slice(-4).toUpperCase();
       return autoCode === code;
     });
   }
