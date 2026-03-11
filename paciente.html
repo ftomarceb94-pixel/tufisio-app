@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="theme-color" content="#0C0D0A"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>TuFisio · Mi Rehab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0C0D0A; --bg2:#111210; --panel:#161714; --border:#252620;
+  --sage:#B2B49C; --sage-d:#8A8C78; --sage-glow:rgba(178,180,156,0.15);
+  --olive:#3B3C36; --cream:#E8E6DC; --cream-dim:#9A9890; --cream-faint:#2A2B26;
+  --green:#6A9E6C; --gold:#B09040; --danger:#C0604A; --info:#5A8EAA;
+  --white:#F2F0E8; --r:16px; --rr:12px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--cream);font-family:'Instrument Sans',sans-serif;overflow:hidden}
+
+/* ── LOGIN ─────────────────────────────────────────────── */
+#login-screen{
+  position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;z-index:100;padding:32px 24px;
+  background-image:radial-gradient(ellipse at 50% 0%,rgba(178,180,156,0.06) 0%,transparent 60%);
+}
+.login-logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--white);letter-spacing:-0.5px;margin-bottom:4px}
+.login-logo span{color:var(--sage)}
+.login-sub{font-size:12px;color:var(--sage-d);font-family:'JetBrains Mono',monospace;margin-bottom:48px;letter-spacing:1px}
+.login-card{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:28px 24px}
+.login-label{font-size:11px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;margin-bottom:8px;text-transform:uppercase}
+.login-inp{width:100%;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;font-size:20px;color:var(--white);font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:3px;text-align:center;text-transform:uppercase;outline:none;transition:border 0.2s}
+.login-inp:focus{border-color:var(--sage)}
+.login-inp::placeholder{font-size:13px;letter-spacing:1px;color:var(--olive);font-weight:400}
+.login-hint{font-size:11px;color:var(--sage-d);text-align:center;margin-top:10px;font-family:'JetBrains Mono',monospace}
+.login-btn{width:100%;margin-top:20px;padding:16px;background:var(--sage);color:var(--bg);font-family:'Syne',sans-serif;font-weight:700;font-size:15px;border:none;border-radius:12px;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s}
+.login-btn:active{transform:scale(0.97);opacity:0.85}
+.login-err{margin-top:12px;padding:10px 14px;background:rgba(192,96,74,0.12);border:1px solid rgba(192,96,74,0.3);border-radius:8px;font-size:12px;color:var(--danger);text-align:center;display:none}
+
+/* ── APP SHELL ──────────────────────────────────────────── */
+#app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+.app-header{
+  background:rgba(12,13,10,0.95);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:12px 18px;
+  padding-top:calc(12px + var(--safe-top));
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.hdr-left{display:flex;align-items:center;gap:10px}
+.hdr-av{width:36px;height:36px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--bg);flex-shrink:0}
+.hdr-name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--white);line-height:1}
+.hdr-diag{font-size:10px;color:var(--sage-d);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.hdr-streak{display:flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:5px 10px}
+.hdr-streak-n{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--gold)}
+.hdr-streak-l{font-size:9px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace}
+.logout-btn{background:none;border:none;color:var(--sage-d);font-size:18px;cursor:pointer;padding:4px}
+
+/* ── CONTENT AREA ───────────────────────────────────────── */
+.app-content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.screen{display:none;padding:16px;padding-bottom:calc(80px + var(--safe-bot))}
+.screen.active{display:block}
+
+/* ── BOTTOM NAV ─────────────────────────────────────────── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(12,13,10,0.97);backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  display:flex;padding:8px 0;padding-bottom:calc(8px + var(--safe-bot));
+  flex-shrink:0;z-index:50;
+}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;background:none;border:none;cursor:pointer;transition:all 0.15s}
+.nav-ico{font-size:20px;line-height:1;transition:transform 0.15s}
+.nav-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--sage-d);letter-spacing:0.3px;transition:color 0.15s}
+.nav-btn.active .nav-ico{transform:scale(1.15)}
+.nav-btn.active .nav-lbl{color:var(--sage)}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--sage);margin-top:2px;display:none}
+.nav-btn.active .nav-dot{display:block}
+
+/* ── CARDS ──────────────────────────────────────────────── */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--white);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.card-title span{color:var(--sage)}
+
+/* ── HOY / EXERCISES ─────────────────────────────────────── */
+.day-header{margin-bottom:16px}
+.day-greeting{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--white);line-height:1.1}
+.day-greeting em{color:var(--sage);font-style:normal}
+.day-date{font-size:11px;color:var(--sage-d);font-family:'JetBrains Mono',monospace;margin-top:4px}
+.day-plan-name{font-size:12px;color:var(--cream-dim);margin-top:2px}
+
+/* progress bar */
+.prog-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.prog-label{font-size:12px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace}
+.prog-count{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--sage)}
+.prog-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--sage),var(--green));border-radius:3px;transition:width 0.4s ease}
+
+/* exercise card */
+.ex-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;transition:all 0.2s;cursor:pointer}
+.ex-card.done{border-color:var(--green);opacity:0.7}
+.ex-card-top{display:flex;align-items:center;gap:12px;padding:12px}
+.ex-thumb{width:64px;height:64px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ex-thumb svg{width:100%;height:100%}
+.ex-info{flex:1;min-width:0}
+.ex-name{font-family:'Syne',sans-serif;font-weight:600;font-size:14px;color:var(--white);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ex-dose{font-size:11px;color:var(--sage-d);font-family:'JetBrains Mono',monospace}
+.ex-type{font-size:10px;color:var(--cream-dim);margin-top:2px}
+.ex-check{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;font-size:16px}
+.ex-card.done .ex-check{background:var(--green);border-color:var(--green);color:#fff}
+
+/* expanded exercise */
+.ex-detail{display:none;padding:0 12px 14px;border-top:1px solid var(--border);margin-top:0}
+.ex-card.open .ex-detail{display:block}
+.ex-card.open .ex-card-top{padding-bottom:14px}
+.ex-big-img{width:100%;height:160px;border-radius:10px;background:var(--bg2);overflow:hidden;margin-bottom:12px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+.ex-big-img svg{width:100%;height:100%}
+.ex-instruc{font-size:13px;color:var(--cream-dim);line-height:1.65;margin-bottom:12px}
+.ex-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pill{background:var(--cream-faint);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--cream-dim)}
+.pill.sage{border-color:var(--sage);color:var(--sage);background:var(--sage-glow)}
+
+/* EVA slider */
+.eva-section{background:var(--bg2);border-radius:10px;padding:12px;margin-bottom:12px}
+.eva-label{font-size:11px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace;margin-bottom:8px}
+.eva-row{display:flex;align-items:center;gap:10px}
+.eva-slider{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;outline:none;cursor:pointer;background:linear-gradient(90deg,var(--green) 0%,var(--gold) 50%,var(--danger) 100%)}
+.eva-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--white);border:2px solid var(--sage);cursor:pointer}
+.eva-val{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--white);min-width:24px;text-align:center}
+.done-btn{width:100%;padding:14px;background:var(--sage);color:var(--bg);font-family:'Syne',sans-serif;font-weight:700;font-size:14px;border:none;border-radius:10px;cursor:pointer;letter-spacing:0.3px;transition:all 0.15s}
+.done-btn:active{transform:scale(0.97)}
+.done-btn.completed{background:var(--green);color:#fff}
+.undo-btn{width:100%;padding:10px;background:none;border:1px solid var(--border);color:var(--cream-dim);font-family:'JetBrains Mono',monospace;font-size:11px;border-radius:8px;cursor:pointer;margin-top:6px}
+
+/* ── PROGRESO ────────────────────────────────────────────── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 14px;text-align:center}
+.stat-n{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--sage);line-height:1}
+.stat-l{font-size:10px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace;margin-top:4px}
+.stat-box.gold .stat-n{color:var(--gold)}
+.stat-box.green .stat-n{color:var(--green)}
+
+/* calendar heatmap */
+.cal-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+.cal-title{font-size:12px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace;margin-bottom:12px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{aspect-ratio:1;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--olive)}
+.cal-day.done{background:var(--sage);color:var(--bg)}
+.cal-day.today{border:1.5px solid var(--sage)}
+.cal-day.empty{background:transparent}
+
+/* EVA history */
+.eva-hist{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:8px}
+.eva-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.eva-bar{width:100%;border-radius:3px 3px 0 0;background:var(--sage);min-height:3px;transition:height 0.3s}
+.eva-bar-d{font-size:7px;color:var(--olive);font-family:'JetBrains Mono',monospace}
+
+/* ── RECORDATORIOS ──────────────────────────────────────── */
+.reminder-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px}
+.reminder-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.reminder-label{font-size:13px;color:var(--white);font-family:'Instrument Sans',sans-serif}
+.reminder-sub{font-size:11px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.toggle{width:44px;height:26px;border-radius:13px;background:var(--border);border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--cream-dim);transition:all 0.2s}
+.toggle.on{background:var(--sage)}
+.toggle.on::after{left:21px;background:var(--bg)}
+.time-inp{background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:14px;color:var(--white);font-family:'JetBrains Mono',monospace;width:100%;outline:none;margin-top:8px;transition:border 0.2s}
+.time-inp:focus{border-color:var(--sage)}
+.save-rem-btn{width:100%;margin-top:12px;padding:13px;background:var(--panel);border:1.5px solid var(--sage);color:var(--sage);font-family:'Syne',sans-serif;font-weight:600;font-size:13px;border-radius:10px;cursor:pointer;transition:all 0.15s}
+.save-rem-btn:active{background:var(--sage);color:var(--bg)}
+
+/* ── EMPTY STATE ─────────────────────────────────────────── */
+.empty{text-align:center;padding:48px 24px}
+.empty-ico{font-size:48px;margin-bottom:12px}
+.empty-title{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--white);margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--cream-dim);line-height:1.5}
+
+/* ── TOAST ───────────────────────────────────────────────── */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--sage);color:var(--bg);font-family:'Syne',sans-serif;font-weight:700;font-size:13px;padding:10px 20px;border-radius:20px;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;z-index:200}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── COMPLETION OVERLAY ──────────────────────────────────── */
+.complete-overlay{position:fixed;inset:0;background:rgba(12,13,10,0.95);display:none;align-items:center;justify-content:center;z-index:150;flex-direction:column;gap:16px;text-align:center;padding:32px}
+.complete-overlay.show{display:flex}
+.complete-ico{font-size:72px;animation:bounce 0.6s ease}
+.complete-title{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:var(--white)}
+.complete-sub{font-size:14px;color:var(--cream-dim);line-height:1.5;max-width:260px}
+.complete-close{margin-top:16px;padding:14px 32px;background:var(--sage);color:var(--bg);font-family:'Syne',sans-serif;font-weight:700;font-size:14px;border:none;border-radius:12px;cursor:pointer}
+@keyframes bounce{0%{transform:scale(0.5)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* ── ANIMATIONS ──────────────────────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.screen.active .card,.screen.active .ex-card,.screen.active .prog-wrap{animation:fadeUp 0.3s ease both}
+.screen.active .ex-card:nth-child(1){animation-delay:0.05s}
+.screen.active .ex-card:nth-child(2){animation-delay:0.1s}
+.screen.active .ex-card:nth-child(3){animation-delay:0.15s}
+.screen.active .ex-card:nth-child(4){animation-delay:0.2s}
+.screen.active .ex-card:nth-child(5){animation-delay:0.25s}
+
+/* scrollbar */
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     LOGIN
+══════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-logo">Tu<span>Fisio</span></div>
+  <div class="login-sub">· MI REHABILITACIÓN ·</div>
+  <div class="login-card">
+    <div class="login-label">Código de paciente</div>
+    <input class="login-inp" id="code-inp" type="text" maxlength="8" placeholder="PAC-001" autocomplete="off" autocorrect="off" spellcheck="false" oninput="this.value=this.value.toUpperCase()"/>
+    <div class="login-hint">Tu terapeuta te proporcionó este código</div>
+    <div class="login-err" id="login-err">Código no encontrado. Verifica con tu terapeuta.</div>
+    <button class="login-btn" onclick="doLogin()">Entrar →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     APP
+══════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="hdr-left">
+      <div class="hdr-av" id="hdr-av">?</div>
+      <div>
+        <div class="hdr-name" id="hdr-name">Paciente</div>
+        <div class="hdr-diag" id="hdr-diag">—</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-streak">
+        <span style="font-size:14px">🔥</span>
+        <span class="hdr-streak-n" id="streak-n">0</span>
+        <span class="hdr-streak-l">días</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" title="Salir">⏻</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="app-content">
+
+    <!-- ── HOY ── -->
+    <div class="screen active" id="s-hoy">
+      <div class="day-header">
+        <div class="day-greeting" id="day-greeting">Buenos días, <em>—</em></div>
+        <div class="day-date" id="day-date">—</div>
+        <div class="day-plan-name" id="day-plan-name"></div>
+      </div>
+
+      <div class="prog-wrap" id="prog-wrap">
+        <div class="prog-row">
+          <span class="prog-label">Progreso de hoy</span>
+          <span class="prog-count" id="prog-count">0 / 0</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      </div>
+
+      <div id="ex-list">
+        <div class="empty">
+          <div class="empty-ico">🏥</div>
+          <div class="empty-title">Sin plan asignado</div>
+          <div class="empty-sub">Tu terapeuta aún no ha generado tu plan de ejercicios.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PROGRESO ── -->
+    <div class="screen" id="s-progreso">
+      <div class="day-header">
+        <div class="day-greeting">Mi <em>Progreso</em></div>
+        <div class="day-date">Últimos 30 días</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box gold">
+          <div class="stat-n" id="st-racha">0</div>
+          <div class="stat-l">🔥 racha días</div>
+        </div>
+        <div class="stat-box green">
+          <div class="stat-n" id="st-total">0</div>
+          <div class="stat-l">✓ días completados</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-n" id="st-exs">0</div>
+          <div class="stat-l">ejercicios totales</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-n" id="st-eva">—</div>
+          <div class="stat-l">EVA promedio</div>
+        </div>
+      </div>
+
+      <div class="cal-wrap">
+        <div class="cal-title">Asistencia · últimas 4 semanas</div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>◈</span> Historial de dolor (EVA)</div>
+        <div class="eva-hist" id="eva-hist"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px">
+          <span style="font-size:9px;color:var(--green);font-family:'JetBrains Mono',monospace">sin dolor</span>
+          <span style="font-size:9px;color:var(--danger);font-family:'JetBrains Mono',monospace">dolor intenso</span>
+        </div>
+      </div>
+
+      <div class="card" id="plan-info-card">
+        <div class="card-title"><span>◩</span> Mi plan actual</div>
+        <div id="plan-info-body" style="font-size:13px;color:var(--cream-dim);line-height:1.7"></div>
+      </div>
+    </div>
+
+    <!-- ── RECORDATORIOS ── -->
+    <div class="screen" id="s-record">
+      <div class="day-header">
+        <div class="day-greeting">Recor<em>datorios</em></div>
+        <div class="day-date">Gestiona tus avisos de ejercicio</div>
+      </div>
+
+      <div class="reminder-card">
+        <div class="reminder-row">
+          <div>
+            <div class="reminder-label">🌅 Recordatorio mañana</div>
+            <div class="reminder-sub" id="r1-sub">Apagado</div>
+          </div>
+          <button class="toggle" id="tog1" onclick="toggleReminder(1)"></button>
+        </div>
+        <div id="r1-time" style="display:none">
+          <label style="font-size:11px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace">Hora:</label>
+          <input class="time-inp" type="time" id="r1-inp" value="08:00"/>
+        </div>
+      </div>
+
+      <div class="reminder-card">
+        <div class="reminder-row">
+          <div>
+            <div class="reminder-label">🌇 Recordatorio tarde</div>
+            <div class="reminder-sub" id="r2-sub">Apagado</div>
+          </div>
+          <button class="toggle" id="tog2" onclick="toggleReminder(2)"></button>
+        </div>
+        <div id="r2-time" style="display:none">
+          <label style="font-size:11px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace">Hora:</label>
+          <input class="time-inp" type="time" id="r2-inp" value="18:00"/>
+        </div>
+      </div>
+
+      <button class="save-rem-btn" onclick="saveReminders()">Guardar recordatorios</button>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-title"><span>◈</span> Sobre los recordatorios</div>
+        <div style="font-size:12px;color:var(--cream-dim);line-height:1.7">
+          Los recordatorios funcionan cuando tienes la app abierta en tu navegador. 
+          Para notificaciones push completas, agrega la app a tu pantalla de inicio 
+          y acepta los permisos de notificación.
+          <br/><br/>
+          <strong style="color:var(--sage)">Agregar al inicio:</strong> En Safari/Chrome → 
+          compartir → "Agregar a pantalla de inicio"
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /app-content -->
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nb-hoy" onclick="goTo('hoy')">
+      <div class="nav-ico">🏠</div>
+      <div class="nav-lbl">Hoy</div>
+      <div class="nav-dot"></div>
+    </button>
+    <button class="nav-btn" id="nb-progreso" onclick="goTo('progreso')">
+      <div class="nav-ico">📊</div>
+      <div class="nav-lbl">Progreso</div>
+      <div class="nav-dot"></div>
+    </button>
+    <button class="nav-btn" id="nb-record" onclick="goTo('record')">
+      <div class="nav-ico">🔔</div>
+      <div class="nav-lbl">Avisos</div>
+      <div class="nav-dot"></div>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- Complete Overlay -->
+<div class="complete-overlay" id="complete-overlay">
+  <div class="complete-ico">🎉</div>
+  <div class="complete-title">¡Sesión completada!</div>
+  <div class="complete-sub" id="complete-msg">Excelente trabajo. Completaste todos tus ejercicios de hoy.</div>
+  <button class="complete-close" onclick="closeComplete()">Ver mi progreso</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- SVG TEMPLATES (inline, sin internet) -->
+<div style="display:none" id="svg-tpl">
+  <div id="tpl-ext_rodilla"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/><rect x="45" y="62" width="10" height="86" rx="4" fill="#2A2B26"/><rect x="45" y="145" width="120" height="10" rx="3" fill="#2A2B26"/><ellipse cx="105" cy="72" rx="17" ry="16" fill="#C8A882"/><rect x="90" y="88" width="30" height="55" rx="7" fill="#A8886A"/><line x1="90" y1="102" x2="62" y2="108" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/><line x1="120" y1="102" x2="148" y2="108" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/><rect x="72" y="136" width="50" height="16" rx="7" fill="#9A7855"/><rect x="122" y="133" width="85" height="16" rx="7" fill="#B2B49C" opacity="0.95"/><ellipse cx="168" cy="141" rx="40" ry="9" fill="#B2B49C" opacity="0.3"/><path d="M122 141 A52 52 0 0 1 168 108" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="5,3"/><text x="165" y="105" fill="#B09040" font-size="14" font-family="monospace" font-weight="bold">60°</text><path d="M250 105 L258 88 L266 105" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/><line x1="258" y1="72" x2="258" y2="105" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/><rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Extensión rodilla 0–60°</text></svg></div>
+  <div id="tpl-sentadilla"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/><ellipse cx="160" cy="32" rx="17" ry="16" fill="#C8A882"/><rect x="146" y="48" width="28" height="46" rx="7" fill="#A8886A"/><line x1="146" y1="62" x2="112" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/><line x1="174" y1="62" x2="208" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/><path d="M150 94 Q132 118 124 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/><path d="M170 94 Q188 118 196 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/><ellipse cx="160" cy="94" rx="25" ry="14" fill="#B2B49C" opacity="0.25"/><line x1="124" y1="140" x2="120" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/><line x1="196" y1="140" x2="200" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/><path d="M258 72 L266 88 L274 72" stroke="#B09040" stroke-width="3" fill="none" stroke-linecap="round"/><text x="250" y="100" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">45°</text><rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Sentadilla asistida 0–45°</text></svg></div>
+  <div id="tpl-puente"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="15" y="170" width="290" height="8" rx="3" fill="#1A1B16"/><ellipse cx="52" cy="138" rx="20" ry="17" fill="#C8A882"/><path d="M70 132 Q105 108 155 106 Q195 108 218 130" stroke="#A8886A" stroke-width="16" stroke-linecap="round" fill="none"/><ellipse cx="155" cy="108" rx="38" ry="20" fill="#B2B49C" opacity="0.9"/><ellipse cx="155" cy="108" rx="38" ry="20" fill="#B2B49C" opacity="0.2"/><line x1="180" y1="120" x2="198" y2="148" stroke="#9A7855" stroke-width="10" stroke-linecap="round"/><line x1="130" y1="120" x2="114" y2="148" stroke="#9A7855" stroke-width="10" stroke-linecap="round"/><ellipse cx="198" cy="158" rx="22" ry="9" fill="#9A7855"/><ellipse cx="114" cy="158" rx="22" ry="9" fill="#9A7855"/><path d="M256 98 L264 80 L272 98" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/><line x1="264" y1="64" x2="264" y2="98" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/><rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GLÚTEOS · ISQUIOTIBIALES</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Puente de glúteos</text></svg></div>
+  <div id="tpl-plancha"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="15" y="170" width="290" height="8" rx="3" fill="#1A1B16"/><rect x="28" y="152" width="32" height="10" rx="3" fill="#9A7855"/><ellipse cx="22" cy="142" rx="15" ry="13" fill="#C8A882"/><rect x="56" y="140" width="100" height="20" rx="8" fill="#B2B49C" opacity="0.9"/><ellipse cx="200" cy="148" rx="12" ry="12" fill="#C8A882" opacity="0.8"/><ellipse cx="220" cy="148" rx="12" ry="12" fill="#C8A882" opacity="0.8"/><line x1="200" y1="158" x2="196" y2="170" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/><line x1="220" y1="158" x2="224" y2="170" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/><line x1="22" y1="144" x2="213" y2="144" stroke="#B09040" stroke-width="1.5" stroke-dasharray="7,4" opacity="0.7"/><circle cx="278" cy="42" r="22" fill="none" stroke="#2A2B26" stroke-width="2"/><text x="266" y="40" fill="#6A9E6C" font-size="12" font-family="monospace" font-weight="bold">30</text><text x="270" y="54" fill="#5C5E55" font-size="9" font-family="monospace">seg</text><rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CORE · ABDOMINALES</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Plancha en rodillas</text></svg></div>
+  <div id="tpl-default"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/><ellipse cx="160" cy="30" rx="18" ry="17" fill="#C8A882"/><rect x="146" y="47" width="28" height="44" rx="7" fill="#A8886A"/><line x1="146" y1="60" x2="115" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/><line x1="174" y1="60" x2="205" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/><line x1="152" y1="91" x2="148" y2="183" stroke="#9A7855" stroke-width="9" stroke-linecap="round"/><line x1="168" y1="91" x2="172" y2="183" stroke="#9A7855" stroke-width="9" stroke-linecap="round"/><rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="185" fill="#B2B49C" font-size="12" font-family="monospace" font-weight="bold">EJERCICIO TERAPÉUTICO</text></svg></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════
+const DB = {
+  get pacientes(){ return JSON.parse(localStorage.getItem('tf_pac')||'[]') },
+  get planes(){ return JSON.parse(localStorage.getItem('tf_planes')||'[]') },
+  get sesiones(){ return JSON.parse(localStorage.getItem('tf_sesiones')||'{}') },
+  set sesiones(v){ localStorage.setItem('tf_sesiones',JSON.stringify(v)) },
+  get reminders(){ return JSON.parse(localStorage.getItem('tf_reminders')||'{}') },
+  set reminders(v){ localStorage.setItem('tf_reminders',JSON.stringify(v)) },
+  get currentPac(){ return localStorage.getItem('tf_pac_login')||null },
+  set currentPac(v){ localStorage.setItem('tf_pac_login',v) },
+};
+
+let PAC = null;   // current patient object
+let PLAN = null;  // current plan object
+let TODAY = dateKey(new Date());
+
+function dateKey(d){ return d.toISOString().split('T')[0] }
+
+// ════════════════════════════════════════════════════════
+// LOGIN
+// ════════════════════════════════════════════════════════
+function doLogin(){
+  const code = document.getElementById('code-inp').value.trim().toUpperCase();
+  if(!code){ return; }
+
+  // Search patient by code field or by auto-generated code from name+id
+  const pacs = DB.pacientes;
+  let found = pacs.find(p => (p.codigo||'').toUpperCase() === code);
+
+  // Fallback: match by PAC-XXX pattern where XXX is part of their ID
+  if(!found){
+    found = pacs.find(p => {
+      const autoCode = 'PAC-' + (p.id||'').slice(-3).toUpperCase();
+      return autoCode === code;
+    });
+  }
+
+  // Fallback: first 3 letters of name + last 3 of id
+  if(!found){
+    found = pacs.find(p => {
+      const n = (p.nombre||'').replace(/\s/g,'').slice(0,3).toUpperCase();
+      const i = (p.id||'').slice(-3).toUpperCase();
+      return (n+i) === code.replace('-','');
+    });
+  }
+
+  if(!found){
+    document.getElementById('login-err').style.display='block';
+    return;
+  }
+
+  DB.currentPac = found.id;
+  initApp(found);
+}
+
+// Allow Enter key
+document.getElementById('code-inp').addEventListener('keydown', e => {
+  if(e.key === 'Enter') doLogin();
+});
+
+function doLogout(){
+  DB.currentPac = null;
+  PAC = null; PLAN = null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('code-inp').value='';
+  document.getElementById('login-err').style.display='none';
+}
+
+// Auto-login if session saved
+window.addEventListener('DOMContentLoaded', () => {
+  const savedId = DB.currentPac;
+  if(savedId){
+    const p = DB.pacientes.find(x=>x.id===savedId);
+    if(p){ initApp(p); return; }
+  }
+  document.getElementById('login-screen').style.display='flex';
+});
+
+// ════════════════════════════════════════════════════════
+// INIT APP
+// ════════════════════════════════════════════════════════
+function initApp(pac){
+  PAC = pac;
+  PLAN = DB.planes.find(pl => pl.pacienteId === pac.id) || null;
+
+  // Hide login, show app
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+
+  // Header
+  const firstName = (pac.nombre||'Paciente').split(' ')[0];
+  document.getElementById('hdr-av').textContent = (pac.nombre||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('hdr-name').textContent = pac.nombre||'Paciente';
+  document.getElementById('hdr-diag').textContent = pac.diagnostico||'—';
+
+  // Greeting
+  const h = new Date().getHours();
+  const greetWord = h<12?'Buenos días':h<18?'Buenas tardes':'Buenas noches';
+  document.getElementById('day-greeting').innerHTML = `${greetWord}, <em>${firstName}</em>`;
+
+  // Date
+  const now = new Date();
+  const opts = {weekday:'long',day:'numeric',month:'long'};
+  document.getElementById('day-date').textContent = now.toLocaleDateString('es-MX',opts);
+
+  // Plan name
+  if(PLAN){
+    document.getElementById('day-plan-name').textContent = '◩ ' + PLAN.nombre;
+  }
+
+  renderStreak();
+  renderExercises();
+  renderProgress();
+  loadReminders();
+}
+
+// ════════════════════════════════════════════════════════
+// EXERCISES
+// ════════════════════════════════════════════════════════
+function renderExercises(){
+  if(!PLAN || !PLAN.ejercicios || PLAN.ejercicios.length === 0){
+    document.getElementById('ex-list').innerHTML = `
+      <div class="empty">
+        <div class="empty-ico">🏥</div>
+        <div class="empty-title">Sin plan asignado</div>
+        <div class="empty-sub">Tu terapeuta aún no ha generado tu plan de ejercicios. Comunícate con él para obtener tu programa.</div>
+      </div>`;
+    document.getElementById('prog-wrap').style.display='none';
+    return;
+  }
+
+  const exs = PLAN.ejercicios;
+  const ses = DB.sesiones;
+  const todaySes = (ses[PAC.id]||{})[TODAY]||{};
+
+  let html = '';
+  exs.forEach((ex,i) => {
+    const done = !!todaySes[i];
+    const eva = todaySes['eva_'+i]||0;
+    const svgKey = guessKey(ex.nombre, ex.region);
+    const svgEl = document.getElementById('tpl-'+svgKey)||document.getElementById('tpl-default');
+    const svgHtml = svgEl ? svgEl.innerHTML : '';
+
+    html += `<div class="ex-card${done?' done':''}" id="ex-${i}" onclick="toggleEx(${i})">
+      <div class="ex-card-top">
+        <div class="ex-thumb">${svgHtml}</div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.nombre||'Ejercicio'}</div>
+          <div class="ex-dose">${ex.series||'—'} series × ${ex.reps||'—'} reps${ex.tiempo?' · '+ex.tiempo:''}</div>
+          <div class="ex-type">${ex.tipo||''} ${ex.rpe?'· RPE '+ex.rpe:''}</div>
+        </div>
+        <div class="ex-check" id="chk-${i}">${done?'✓':''}</div>
+      </div>
+      <div class="ex-detail" id="det-${i}">
+        <div class="ex-big-img">${svgHtml}</div>
+        <div class="ex-pills">
+          ${ex.series?`<span class="pill sage">${ex.series} series</span>`:''}
+          ${ex.reps?`<span class="pill sage">${ex.reps} reps</span>`:''}
+          ${ex.tiempo?`<span class="pill sage">${ex.tiempo}</span>`:''}
+          ${ex.rpe?`<span class="pill">RPE ${ex.rpe}</span>`:''}
+          ${ex.region?`<span class="pill">${ex.region}</span>`:''}
+          ${ex.nivel_evidencia?`<span class="pill">Evidencia ${ex.nivel_evidencia}</span>`:''}
+        </div>
+        <div class="ex-instruc">${ex.instrucciones_paciente||ex.instrucciones||'Sigue las instrucciones de tu terapeuta para este ejercicio.'}</div>
+        <div class="eva-section">
+          <div class="eva-label">¿Cuánto dolor sientes? (EVA 0–10)</div>
+          <div class="eva-row">
+            <input class="eva-slider" type="range" min="0" max="10" value="${eva}" id="eva-${i}" 
+              oninput="document.getElementById('evav-${i}').textContent=this.value"/>
+            <div class="eva-val" id="evav-${i}">${eva}</div>
+          </div>
+        </div>
+        ${done
+          ? `<button class="done-btn completed" disabled>✓ Completado</button>
+             <button class="undo-btn" onclick="event.stopPropagation();undoEx(${i})">↩ Deshacer</button>`
+          : `<button class="done-btn" onclick="event.stopPropagation();markDone(${i})">✓ Marcar como completado</button>`
+        }
+        ${ex.razon_clinica?`<div style="margin-top:12px;padding:10px 12px;background:rgba(178,180,156,0.06);border-left:2px solid var(--sage);border-radius:0 8px 8px 0"><div style="font-size:10px;color:var(--sage-d);font-family:'JetBrains Mono',monospace;margin-bottom:3px">¿Por qué este ejercicio?</div><div style="font-size:12px;color:var(--cream-dim);line-height:1.6">${ex.razon_clinica}</div></div>`:''}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('ex-list').innerHTML = html;
+  updateProgress();
+}
+
+function toggleEx(i){
+  const card = document.getElementById('ex-${i}');
+  // Use template literal properly
+  const cardEl = document.getElementById('ex-'+i);
+  const detEl = document.getElementById('det-'+i);
+  if(!cardEl) return;
+  const isOpen = cardEl.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.ex-card.open').forEach(c => c.classList.remove('open'));
+  if(!isOpen) cardEl.classList.add('open');
+}
+
+function markDone(i){
+  const evaVal = parseInt(document.getElementById('eva-'+i)?.value||0);
+  const ses = DB.sesiones;
+  if(!ses[PAC.id]) ses[PAC.id] = {};
+  if(!ses[PAC.id][TODAY]) ses[PAC.id][TODAY] = {};
+  ses[PAC.id][TODAY][i] = true;
+  ses[PAC.id][TODAY]['eva_'+i] = evaVal;
+  DB.sesiones = ses;
+
+  const card = document.getElementById('ex-'+i);
+  if(card){
+    card.classList.add('done');
+    card.classList.remove('open');
+    const chk = document.getElementById('chk-'+i);
+    if(chk){ chk.textContent='✓'; }
+  }
+
+  updateProgress();
+  showToast('✓ Ejercicio completado');
+  checkAllDone();
+}
+
+function undoEx(i){
+  const ses = DB.sesiones;
+  if(ses[PAC.id]&&ses[PAC.id][TODAY]){
+    delete ses[PAC.id][TODAY][i];
+    delete ses[PAC.id][TODAY]['eva_'+i];
+    DB.sesiones = ses;
+  }
+  renderExercises();
+  updateProgress();
+}
+
+function updateProgress(){
+  if(!PLAN||!PLAN.ejercicios) return;
+  const total = PLAN.ejercicios.length;
+  const ses = DB.sesiones;
+  const todaySes = (ses[PAC.id]||{})[TODAY]||{};
+  const done = PLAN.ejercicios.filter((_,i)=>!!todaySes[i]).length;
+  const pct = total>0 ? Math.round(done/total*100) : 0;
+  document.getElementById('prog-count').textContent = done+' / '+total;
+  document.getElementById('prog-fill').style.width = pct+'%';
+}
+
+function checkAllDone(){
+  if(!PLAN||!PLAN.ejercicios) return;
+  const total = PLAN.ejercicios.length;
+  const ses = DB.sesiones;
+  const todaySes = (ses[PAC.id]||{})[TODAY]||{};
+  const done = PLAN.ejercicios.filter((_,i)=>!!todaySes[i]).length;
+  if(done >= total && total > 0){
+    // Save streak
+    const streak = calcStreak();
+    document.getElementById('complete-msg').textContent =
+      `Excelente trabajo, ${(PAC.nombre||'').split(' ')[0]}. Completaste los ${total} ejercicios de hoy. 🔥 Racha: ${streak} días`;
+    document.getElementById('complete-overlay').classList.add('show');
+    renderStreak();
+    renderProgress();
+  }
+}
+
+function closeComplete(){
+  document.getElementById('complete-overlay').classList.remove('show');
+  goTo('progreso');
+}
+
+// ════════════════════════════════════════════════════════
+// STREAK & PROGRESS
+// ════════════════════════════════════════════════════════
+function calcStreak(){
+  if(!PAC) return 0;
+  const ses = DB.sesiones;
+  const pacSes = ses[PAC.id]||{};
+  let streak = 0;
+  let d = new Date();
+  while(true){
+    const key = dateKey(d);
+    const daySes = pacSes[key]||{};
+    const total = PLAN?.ejercicios?.length||0;
+    const done = Object.keys(daySes).filter(k=>!k.startsWith('eva_')).length;
+    if(total > 0 && done >= total){
+      streak++;
+      d.setDate(d.getDate()-1);
+    } else { break; }
+  }
+  return streak;
+}
+
+function renderStreak(){
+  const s = calcStreak();
+  document.getElementById('streak-n').textContent = s;
+  document.getElementById('st-racha').textContent = s;
+}
+
+function renderProgress(){
+  if(!PAC) return;
+  const ses = DB.sesiones;
+  const pacSes = ses[PAC.id]||{};
+  const total = PLAN?.ejercicios?.length||0;
+
+  // Last 30 days
+  let completedDays = 0, totalExsDone = 0, evaSum = 0, evaCount = 0;
+  const days = [];
+  for(let i=29;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = dateKey(d);
+    const daySes = pacSes[key]||{};
+    const exDone = Object.keys(daySes).filter(k=>!k.startsWith('eva_')).length;
+    const fullDay = total>0 && exDone>=total;
+    if(fullDay) completedDays++;
+    totalExsDone += exDone;
+    // EVA average for day
+    const evaKeys = Object.keys(daySes).filter(k=>k.startsWith('eva_'));
+    evaKeys.forEach(k=>{ evaSum+=daySes[k]; evaCount++; });
+    days.push({key,d,fullDay,exDone});
+  }
+
+  document.getElementById('st-total').textContent = completedDays;
+  document.getElementById('st-exs').textContent = totalExsDone;
+  document.getElementById('st-eva').textContent = evaCount>0 ? (evaSum/evaCount).toFixed(1) : '—';
+
+  // Calendar
+  const cal = document.getElementById('cal-grid');
+  // Weekday labels
+  const wdays = ['D','L','M','X','J','V','S'];
+  let calHtml = wdays.map(d=>`<div class="cal-day" style="background:none;color:var(--sage-d);font-size:8px">${d}</div>`).join('');
+  // Offset for first day
+  const firstDay = days[0].d.getDay();
+  for(let i=0;i<firstDay;i++) calHtml+=`<div class="cal-day empty"></div>`;
+  days.forEach(day=>{
+    const isToday = day.key === TODAY;
+    calHtml+=`<div class="cal-day${day.fullDay?' done':''}${isToday?' today':''}" title="${day.key}">${day.d.getDate()}</div>`;
+  });
+  cal.innerHTML = calHtml;
+
+  // EVA history bars (last 14 days)
+  const last14 = days.slice(-14);
+  const evaHist = document.getElementById('eva-hist');
+  evaHtml = last14.map(day=>{
+    const daySes = pacSes[day.key]||{};
+    const evaKeys = Object.keys(daySes).filter(k=>k.startsWith('eva_'));
+    const avgEva = evaKeys.length>0 ? evaKeys.reduce((s,k)=>s+daySes[k],0)/evaKeys.length : null;
+    const h = avgEva!==null ? Math.max(6,avgEva/10*50) : 3;
+    const col = avgEva!==null ? (avgEva<=3?'#6A9E6C':avgEva<=6?'#B09040':'#C0604A') : '#2A2B26';
+    return `<div class="eva-bar-wrap">
+      <div class="eva-bar" style="height:${h}px;background:${col}"></div>
+      <div class="eva-bar-d">${day.d.getDate()}</div>
+    </div>`;
+  }).join('');
+  evaHist.innerHTML = evaHtml;
+
+  // Plan info
+  if(PLAN){
+    document.getElementById('plan-info-body').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--cream-dim)">Plan</span><span style="color:var(--white);font-weight:600">${PLAN.nombre||'—'}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--cream-dim)">Ejercicios</span><span style="color:var(--sage)">${(PLAN.ejercicios||[]).length}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--cream-dim)">Frecuencia</span><span style="color:var(--white)">${PLAN.frecuencia||'—'}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--cream-dim)">Fecha</span><span style="color:var(--cream-dim);font-family:'JetBrains Mono',monospace;font-size:11px">${PLAN.fecha||'—'}</span></div>
+        ${PLAN.evidencia?`<div style="margin-top:6px;padding:8px 10px;background:rgba(178,180,156,0.06);border-radius:8px;font-size:11px;color:var(--sage-d);font-family:'JetBrains Mono',monospace">${PLAN.evidencia}</div>`:''}
+      </div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// ILLUSTRATION HELPER
+// ════════════════════════════════════════════════════════
+function guessKey(nombre, region){
+  if(!nombre) return 'default';
+  const n = nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(n.includes('extension')&&(n.includes('rodill')||n.includes('quad'))) return 'ext_rodilla';
+  if(n.includes('sentadill')||n.includes('squat')) return 'sentadilla';
+  if(n.includes('puente')||n.includes('bridge')) return 'puente';
+  if(n.includes('plancha')||n.includes('plank')) return 'plancha';
+  if(n.includes('zancada')||n.includes('lunge')) return 'sentadilla';
+  if(n.includes('elev')&&n.includes('piern')) return 'ext_rodilla';
+  return 'default';
+}
+
+// ════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════
+function goTo(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('s-'+screen).classList.add('active');
+  document.getElementById('nb-'+screen).classList.add('active');
+  if(screen==='progreso'){ renderStreak(); renderProgress(); }
+  if(screen==='hoy'){ renderExercises(); }
+  window.scrollTo(0,0);
+}
+
+// ════════════════════════════════════════════════════════
+// REMINDERS
+// ════════════════════════════════════════════════════════
+let remTimers = [];
+
+function loadReminders(){
+  const r = DB.reminders;
+  if(r.r1){ document.getElementById('tog1').classList.add('on'); document.getElementById('r1-time').style.display='block'; document.getElementById('r1-inp').value=r.r1time||'08:00'; document.getElementById('r1-sub').textContent=r.r1time||'08:00'; }
+  if(r.r2){ document.getElementById('tog2').classList.add('on'); document.getElementById('r2-time').style.display='block'; document.getElementById('r2-inp').value=r.r2time||'18:00'; document.getElementById('r2-sub').textContent=r.r2time||'18:00'; }
+  scheduleReminders();
+}
+
+function toggleReminder(n){
+  const tog = document.getElementById('tog'+n);
+  const timeDiv = document.getElementById('r'+n+'-time');
+  const on = !tog.classList.contains('on');
+  tog.classList.toggle('on', on);
+  timeDiv.style.display = on ? 'block' : 'none';
+  document.getElementById('r'+n+'-sub').textContent = on ? (document.getElementById('r'+n+'-inp').value) : 'Apagado';
+}
+
+function saveReminders(){
+  const r1on = document.getElementById('tog1').classList.contains('on');
+  const r2on = document.getElementById('tog2').classList.contains('on');
+  const r = {
+    r1: r1on, r1time: document.getElementById('r1-inp').value,
+    r2: r2on, r2time: document.getElementById('r2-inp').value,
+  };
+  DB.reminders = r;
+  scheduleReminders();
+  showToast('Recordatorios guardados');
+}
+
+function scheduleReminders(){
+  remTimers.forEach(t=>clearTimeout(t));
+  remTimers=[];
+  const r = DB.reminders;
+  const schedule = (timeStr, msg)=>{
+    if(!timeStr) return;
+    const [hh,mm] = timeStr.split(':').map(Number);
+    const now = new Date();
+    const target = new Date(); target.setHours(hh,mm,0,0);
+    if(target <= now) target.setDate(target.getDate()+1);
+    const ms = target - now;
+    const t = setTimeout(()=>{
+      if(Notification.permission==='granted'){
+        new Notification('TuFisio 💪',{body:msg,icon:'/favicon.ico'});
+      } else {
+        showToast('⏰ '+msg);
+      }
+    }, ms);
+    remTimers.push(t);
+  };
+  if(r.r1) schedule(r.r1time, '¡Hora de tu sesión de rehabilitación!');
+  if(r.r2) schedule(r.r2time, 'No olvides tus ejercicios de esta tarde');
+  // Request permission
+  if((r.r1||r.r2) && Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
