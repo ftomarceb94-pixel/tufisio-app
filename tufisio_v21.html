@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0C0D0A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>TuFisio — Sistema Clínico v2.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0C0D0A;--bg2:#111210;--bg3:#161714;--panel:#1A1B18;
+  --border:rgba(178,180,156,0.12);--border2:rgba(178,180,156,0.06);
+  --sage:#B2B49C;--sage-dim:rgba(178,180,156,0.5);--sage-glow:rgba(178,180,156,0.1);
+  --olive:#3B3C36;--olive-lit:#5C5E55;
+  --cream:#E8E6DC;--cream-dim:rgba(232,230,220,0.65);--cream-faint:rgba(232,230,220,0.06);
+  --danger:#C0624A;--danger-dim:rgba(192,98,74,0.15);
+  --success:#6A9E6C;--success-dim:rgba(106,158,108,0.15);
+  --warn:#B09040;--warn-dim:rgba(176,144,64,0.15);
+  --white:#F0EEE4;--accent:#7AA0D8;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--cream);}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(178,180,156,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(178,180,156,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+
+.app{display:flex;height:100vh;position:relative;z-index:1;}
+.sidebar{width:60px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:2px;flex-shrink:0;z-index:100;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{height:50px;background:rgba(12,13,10,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0;}
+.content{flex:1;overflow-y:auto;padding:20px;scrollbar-width:thin;scrollbar-color:var(--olive) transparent;}
+.content::-webkit-scrollbar{width:4px;}
+.content::-webkit-scrollbar-thumb{background:var(--olive);border-radius:2px;}
+.statusbar{height:24px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--olive-lit);flex-shrink:0;}
+
+.s-logo{width:30px;height:30px;border-radius:7px;background:var(--sage-glow);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:var(--sage);cursor:pointer;margin-bottom:16px;}
+.s-btn{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;color:var(--olive-lit);font-size:15px;position:relative;border:none;background:transparent;}
+.s-btn:hover{background:var(--cream-faint);color:var(--cream-dim);}
+.s-btn.active{background:var(--sage-glow);color:var(--sage);}
+.s-btn.active::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:16px;background:var(--sage);border-radius:0 2px 2px 0;}
+.s-div{width:22px;height:1px;background:var(--border);margin:4px 0;}
+.s-bottom{margin-top:auto;}
+.s-av{width:32px;height:32px;border-radius:50%;background:var(--sage-glow);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--sage);}
+
+.breadcrumb{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--olive-lit);display:flex;align-items:center;gap:5px;}
+.bc-sep{color:var(--border);}.bc-cur{color:var(--cream-dim);}
+.bc-link{cursor:pointer;transition:color 0.15s;}.bc-link:hover{color:var(--sage);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.tb-search{display:flex;align-items:center;gap:7px;background:var(--cream-faint);border:1px solid var(--border);border-radius:7px;padding:5px 11px;}
+.tb-search input{background:transparent;border:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cream-dim);width:140px;}
+.tb-search input::placeholder{color:var(--olive-lit);}
+
+.btn{padding:6px 14px;border-radius:7px;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;}
+.btn-ghost{background:transparent;color:var(--cream-dim);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--cream-faint);border-color:var(--sage-dim);}
+.btn-primary{background:var(--sage);color:var(--bg);box-shadow:0 0 14px rgba(178,180,156,0.18);}
+.btn-primary:hover{background:var(--white);box-shadow:0 0 22px rgba(178,180,156,0.3);}
+.btn-danger{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(192,98,74,0.3);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.btn-icon{width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.btn-glow{background:var(--sage);color:var(--bg);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;padding:11px 18px;border-radius:8px;border:none;cursor:pointer;width:100%;transition:all 0.2s;}
+.btn-glow:hover{box-shadow:0 0 20px rgba(178,180,156,0.3);transform:translateY(-1px);}
+.btn-glow:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.spinner-wrap{display:none;align-items:center;justify-content:center;gap:6px;}
+.spinner{width:13px;height:13px;border:2px solid rgba(12,13,10,0.3);border-top-color:var(--bg);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:13px;overflow:hidden;}
+.card-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.card-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--cream-dim);text-transform:uppercase;letter-spacing:1px;}
+.card-act{margin-left:auto;font-size:10px;color:var(--olive-lit);cursor:pointer;font-family:'JetBrains Mono',monospace;transition:color 0.15s;border:none;background:transparent;}
+.card-act:hover{color:var(--sage);}
+.card-body{padding:14px 16px;}
+
+.badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;}
+.badge-info{background:var(--sage-glow);color:var(--sage);border:1px solid var(--border);}
+.badge-danger{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(192,98,74,0.3);}
+.badge-warn{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(176,144,64,0.3);}
+.badge-ok{background:var(--success-dim);color:var(--success);border:1px solid rgba(106,158,108,0.3);}
+
+.tag{font-size:9px;font-weight:600;padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;}
+.tag-dm{background:var(--warn-dim);color:var(--warn);}
+.tag-hta{background:var(--danger-dim);color:var(--danger);}
+.tag-ost{background:var(--success-dim);color:var(--success);}
+.tag-dep{background:rgba(100,140,200,0.15);color:#7AA0D8;}
+.tag-neu{background:rgba(120,80,180,0.15);color:#A080D8;}
+
+.screen{display:none;flex-direction:column;gap:14px;}
+.screen.active{display:flex;}
+
+.page-hdr{display:flex;align-items:flex-end;justify-content:space-between;}
+.page-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--white);letter-spacing:-0.5px;line-height:1;}
+.page-title span{color:var(--sage);}
+.page-sub{font-size:11px;color:var(--olive-lit);margin-top:4px;font-family:'JetBrains Mono',monospace;}
+.hdr-actions{display:flex;gap:8px;align-items:center;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.live{width:5px;height:5px;border-radius:50%;background:var(--success);display:inline-block;margin-right:5px;animation:pulse 2s infinite;}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:14px 16px;position:relative;overflow:hidden;transition:all 0.2s;cursor:default;}
+.stat:hover{border-color:rgba(178,180,156,0.22);transform:translateY(-2px);}
+.stat::after{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--sage-dim),transparent);}
+.stat.s-danger::after{background:linear-gradient(90deg,transparent,var(--danger),transparent);}
+.stat.s-success::after{background:linear-gradient(90deg,transparent,var(--success),transparent);}
+.stat.s-warn::after{background:linear-gradient(90deg,transparent,var(--warn),transparent);}
+.stat-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--olive-lit);margin-bottom:8px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--white);line-height:1;letter-spacing:-1px;}
+.stat-sub{font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace;margin-top:4px;}
+.stat-ico{position:absolute;right:14px;top:14px;font-size:18px;opacity:0.12;}
+
+/* EXERCISE CARDS */
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.ex-card{background:var(--panel);border:1px solid var(--border);border-radius:13px;overflow:hidden;transition:all 0.2s;display:flex;flex-direction:column;cursor:pointer;}
+.ex-card:hover{border-color:rgba(178,180,156,0.3);transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,0.3);}
+.ex-img{width:100%;height:160px;background:linear-gradient(160deg,#131410 0%,#0E0F0C 100%);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border);overflow:hidden;position:relative;}
+.ex-img svg{width:100%;height:100%;}
+.ex-region-badge{position:absolute;top:8px;right:8px;font-size:9px;padding:2px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-weight:600;background:rgba(12,13,10,0.85);backdrop-filter:blur(4px);color:var(--sage);border:1px solid var(--border);}
+.ex-ev-badge{position:absolute;bottom:8px;left:8px;font-size:9px;padding:2px 7px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.ev-a{background:rgba(106,158,108,0.2);color:var(--success);border:1px solid rgba(106,158,108,0.3);}
+.ev-b{background:rgba(176,144,64,0.2);color:var(--warn);border:1px solid rgba(176,144,64,0.3);}
+.ev-c{background:var(--cream-faint);color:var(--olive-lit);border:1px solid var(--border);}
+.ex-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;}
+.ex-name{font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px;line-height:1.3;}
+.ex-region-lbl{font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace;margin-bottom:8px;}
+.ex-doses{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.ex-dose{font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);background:var(--cream-faint);color:var(--cream-dim);font-family:'JetBrains Mono',monospace;}
+.ex-dose.hl{background:var(--sage-glow);color:var(--sage);border-color:rgba(178,180,156,0.25);}
+.ex-desc{font-size:11px;color:var(--olive-lit);line-height:1.5;flex:1;}
+.ex-footer{display:flex;align-items:center;padding:8px 14px;border-top:1px solid var(--border);background:rgba(0,0,0,0.1);}
+
+/* FILTER TABS */
+.filter-tabs{display:flex;gap:4px;flex-wrap:wrap;}
+.ftab{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--cream-faint);color:var(--olive-lit);transition:all 0.15s;font-family:'JetBrains Mono',monospace;}
+.ftab:hover{border-color:var(--sage-dim);color:var(--cream-dim);}
+.ftab.active{background:var(--sage-glow);border-color:var(--sage-dim);color:var(--sage);}
+
+/* IA PANEL */
+.ia-layout{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;}
+.ia-form-card{background:var(--panel);border:1px solid var(--border);border-radius:13px;overflow:hidden;position:sticky;top:0;max-height:calc(100vh - 120px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--olive) transparent;}
+.ia-form-hdr{background:linear-gradient(135deg,#1A1B18,#0E0F0C);padding:16px;border-bottom:1px solid var(--border);position:relative;}
+.ia-form-hdr::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--sage-dim),transparent);}
+.ia-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--white);margin-bottom:2px;}
+.ia-sub{font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace;}
+.ia-body{padding:14px;}
+.form-grp{margin-bottom:10px;}
+.form-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:var(--olive-lit);margin-bottom:5px;display:block;}
+.form-inp,.form-sel,.form-ta{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg2);color:var(--cream-dim);font-family:'Instrument Sans',sans-serif;font-size:12px;outline:none;transition:border 0.2s;}
+.form-inp:focus,.form-sel:focus,.form-ta:focus{border-color:var(--sage-dim);color:var(--cream);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.form-ta{resize:vertical;min-height:60px;line-height:1.6;}
+.patho-grid{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.pc-check{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:var(--cream-faint);cursor:pointer;transition:all 0.15s;font-size:10px;color:var(--cream-dim);font-family:'JetBrains Mono',monospace;user-select:none;}
+.pc-check:hover{border-color:var(--sage-dim);}
+.pc-check.sel{background:var(--sage-glow);border-color:var(--sage-dim);color:var(--sage);}
+.pc-check input{display:none;}
+
+/* RESULT */
+.result-empty{text-align:center;padding:60px 20px;background:var(--panel);border:1px solid var(--border);border-radius:13px;}
+.result-ico{font-size:48px;opacity:0.2;margin-bottom:16px;}
+.result-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--cream-dim);margin-bottom:8px;}
+.result-sub{font-size:12px;color:var(--olive-lit);line-height:1.7;}
+.plan-result{display:flex;flex-direction:column;gap:12px;}
+.plan-hdr-box{background:linear-gradient(135deg,#1A1B18,#0E0F0C);border:1px solid var(--border);border-radius:13px;padding:18px 20px;position:relative;overflow:hidden;}
+.plan-hdr-box::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--sage-dim),transparent);}
+.plan-hdr-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--white);margin-bottom:4px;}
+.plan-hdr-sub{font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace;margin-bottom:10px;}
+.plan-pills{display:flex;gap:5px;flex-wrap:wrap;}
+.plan-pill{font-size:10px;padding:2px 8px;border-radius:3px;border:1px solid var(--border);background:var(--cream-faint);color:var(--cream-dim);font-family:'JetBrains Mono',monospace;}
+.ev-band{background:rgba(58,96,128,0.1);border:1px solid rgba(58,96,128,0.25);border-radius:8px;padding:10px 13px;display:flex;gap:8px;align-items:flex-start;}
+.ev-text{font-size:11px;color:rgba(180,210,240,0.8);line-height:1.5;}
+.warn-band{background:var(--warn-dim);border:1px solid rgba(176,144,64,0.3);border-radius:8px;padding:10px 13px;display:flex;gap:8px;}
+.wb-text{font-size:11px;color:var(--warn);line-height:1.5;}
+.restrict-alert{background:var(--danger-dim);border:1px solid rgba(192,98,74,0.3);border-radius:8px;padding:10px 13px;display:flex;gap:8px;}
+.restrict-text{font-size:11px;color:var(--danger);line-height:1.5;}
+
+/* PLAN EXERCISE CARD with illustration */
+.plan-ex-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all 0.15s;display:flex;}
+.plan-ex-card:hover{border-color:rgba(178,180,156,0.22);}
+.pec-illus{width:120px;flex-shrink:0;background:linear-gradient(160deg,#131410,#0E0F0C);display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border);position:relative;overflow:hidden;}
+.pec-illus svg{width:110px;height:110px;}
+.pec-num-badge{position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;background:rgba(178,180,156,0.15);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:10px;font-weight:800;color:var(--sage);}
+.pec-main{flex:1;padding:10px 13px;}
+.pec-name{font-size:13px;font-weight:600;color:var(--white);margin-bottom:2px;}
+.pec-region{font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace;margin-bottom:6px;}
+.pec-doses{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
+.pec-dose{font-size:9px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);background:var(--cream-faint);color:var(--cream-dim);font-family:'JetBrains Mono',monospace;}
+.pec-dose.hl{background:var(--sage-glow);color:var(--sage);border-color:rgba(178,180,156,0.25);}
+.pec-instruc{font-size:11px;color:var(--cream-dim);line-height:1.55;margin-bottom:5px;}
+.pec-razon{font-size:10px;color:var(--sage);font-family:'JetBrains Mono',monospace;margin-top:3px;}
+.pec-warn{font-size:10px;color:var(--warn);margin-top:3px;}
+.pec-right{padding:10px 12px;display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:5px;flex-shrink:0;}
+
+/* PATIENT TABLE */
+.pt-table{width:100%;border-collapse:collapse;}
+.pt-table th{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--olive-lit);padding:0 12px 9px;text-align:left;border-bottom:1px solid var(--border);font-weight:400;}
+.pt-row{cursor:pointer;transition:background 0.12s;border-bottom:1px solid var(--border2);}
+.pt-row:hover{background:var(--cream-faint);}
+.pt-row:last-child{border-bottom:none;}
+.pt-row td{padding:10px 12px;vertical-align:middle;}
+.pt-av-wrap{display:flex;align-items:center;gap:9px;}
+.pt-av{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;border:1px solid var(--border);}
+.pt-name{font-size:12px;font-weight:500;color:var(--white);}
+.pt-meta{font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace;}
+.tags-cell{display:flex;gap:3px;flex-wrap:wrap;}
+.empty-state{text-align:center;padding:40px 20px;}
+.empty-ico{font-size:36px;opacity:0.25;margin-bottom:10px;}
+.empty-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--cream-dim);margin-bottom:5px;}
+.empty-sub{font-size:12px;color:var(--olive-lit);margin-bottom:12px;}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--bg3);border:1px solid var(--border);border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,0.6);transform:translateY(20px);transition:transform 0.2s;scrollbar-width:thin;scrollbar-color:var(--olive) transparent;}
+.overlay.open .modal{transform:translateY(0);}
+.modal-hdr{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg3);z-index:1;}
+.modal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--white);}
+.modal-close{width:26px;height:26px;border-radius:5px;background:var(--cream-faint);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--cream-dim);font-size:13px;}
+.modal-body{padding:18px 20px;}
+.form-section{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--cream-dim);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.form-section:first-child{margin-top:0;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--bg3);}
+
+/* TOAST */
+.toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel);border:1px solid var(--sage-dim);border-radius:10px;padding:10px 18px;font-size:12px;font-weight:500;color:var(--sage);box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:2000;opacity:0;transition:all 0.3s;pointer-events:none;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.error{border-color:rgba(192,98,74,0.5);color:var(--danger);}
+
+/* CONFIRM */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.confirm-overlay.open{opacity:1;pointer-events:all;}
+.confirm-box{background:var(--bg3);border:1px solid var(--border);border-radius:13px;padding:22px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+.confirm-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--white);margin-bottom:7px;}
+.confirm-text{font-size:12px;color:var(--cream-dim);margin-bottom:18px;line-height:1.5;}
+.confirm-btns{display:flex;gap:8px;justify-content:flex-end;}
+
+/* PROFILE */
+.profile-layout{display:grid;grid-template-columns:230px 1fr;gap:14px;align-items:start;}
+.profile-card{background:var(--panel);border:1px solid var(--border);border-radius:13px;overflow:hidden;}
+.pc-hdr{background:linear-gradient(135deg,#1A1B18,#0E0F0C);padding:18px 14px;text-align:center;border-bottom:1px solid var(--border);}
+.big-av{width:54px;height:54px;border-radius:50%;background:var(--sage-glow);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--sage);margin:0 auto 10px;position:relative;}
+.big-av::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1px solid rgba(178,180,156,0.15);}
+.pc-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--white);margin-bottom:2px;}
+.pc-sub{font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace;}
+.pc-body{padding:11px 13px;}
+.info-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border2);font-size:11px;}
+.info-row:last-child{border-bottom:none;}
+.info-lbl{color:var(--olive-lit);font-family:'JetBrains Mono',monospace;font-size:10px;}
+.info-val{color:var(--white);font-weight:500;}
+.pc-tags{padding:9px 13px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:4px;}
+.pc-actions{padding:9px 13px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px;}
+.abox{border-radius:8px;padding:9px 11px;margin-bottom:7px;display:flex;gap:8px;}
+.abox:last-child{margin-bottom:0;}
+.abox.danger{background:var(--danger-dim);border:1px solid rgba(192,98,74,0.3);}
+.abox.warn{background:var(--warn-dim);border:1px solid rgba(176,144,64,0.3);}
+.abox-title{font-size:11px;font-weight:700;margin-bottom:2px;}
+.abox-title.d{color:var(--danger);}.abox-title.w{color:var(--warn);}
+.abox-text{font-size:10.5px;color:var(--cream-dim);line-height:1.5;}
+.note-item{padding:8px 0;border-bottom:1px solid var(--border2);}
+.note-item:last-child{border-bottom:none;}
+.note-text{font-size:12px;color:var(--cream-dim);line-height:1.5;}
+.note-date{font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.phase-row{display:flex;align-items:center;margin:6px 0;}
+.phase-step{flex:1;text-align:center;position:relative;}
+.phase-step::after{content:"";position:absolute;top:10px;left:50%;right:-50%;height:1px;background:var(--border);z-index:0;}
+.phase-step:last-child::after{display:none;}
+.ph-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;margin:0 auto 3px;position:relative;z-index:1;font-family:'JetBrains Mono',monospace;}
+.ph-done{background:var(--success);color:white;}.ph-active{background:var(--sage);color:var(--bg);}.ph-next{background:var(--cream-faint);border:1px solid var(--border);color:var(--olive-lit);}
+.ph-lbl{font-size:9px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace;line-height:1.3;}
+.ph-lbl.a{color:var(--sage);font-weight:600;}
+
+/* AV COLORS */
+.av-c1{background:rgba(178,180,156,0.1);color:var(--sage);}
+.av-c2{background:rgba(106,158,108,0.1);color:var(--success);}
+.av-c3{background:rgba(176,144,64,0.1);color:var(--warn);}
+.av-c4{background:rgba(158,168,130,0.1);color:#9EA882;}
+.av-c5{background:rgba(192,98,74,0.1);color:var(--danger);}
+.av-c6{background:rgba(100,140,200,0.1);color:#7AA0D8;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.screen.active>*{animation:fadeUp 0.3s ease both;}
+.screen.active>*:nth-child(1){animation-delay:0.03s;}
+.screen.active>*:nth-child(2){animation-delay:0.07s;}
+.screen.active>*:nth-child(3){animation-delay:0.11s;}
+.screen.active>*:nth-child(4){animation-delay:0.15s;}
+
+@keyframes scanline{0%{top:-5%;}100%{top:105%;}}
+.scanline{position:fixed;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(178,180,156,0.04),transparent);animation:scanline 6s linear infinite;pointer-events:none;z-index:9999;}
+
+/* SVG ANIMATIONS */
+@keyframes arrowMove{0%,100%{opacity:0.4;transform:translateY(0);}50%{opacity:1;transform:translateY(-4px);}}
+@keyframes arrowMoveDown{0%,100%{opacity:0.4;transform:translateY(0);}50%{opacity:1;transform:translateY(4px);}}
+@keyframes arrowMoveRight{0%,100%{opacity:0.4;transform:translateX(0);}50%{opacity:1;transform:translateX(4px);}}
+@keyframes arrowMoveLeft{0%,100%{opacity:0.4;transform:translateX(0);}50%{opacity:1;transform:translateX(-4px);}}
+@keyframes muscleGlow{0%,100%{opacity:0.5;}50%{opacity:0.9;}}
+@keyframes blink{0%,100%{opacity:0.3;}50%{opacity:1;}}
+.arr-up{animation:arrowMove 1.5s ease-in-out infinite;}
+.arr-down{animation:arrowMoveDown 1.5s ease-in-out infinite;}
+.arr-right{animation:arrowMoveRight 1.5s ease-in-out infinite;}
+.arr-left{animation:arrowMoveLeft 1.5s ease-in-out infinite;}
+.muscle-hl{animation:muscleGlow 2s ease-in-out infinite;}
+.ai-dots span{animation:blink 1.4s ease infinite;}
+.ai-dots span:nth-child(2){animation-delay:0.2s;}
+.ai-dots span:nth-child(3){animation-delay:0.4s;}
+
+@media(max-width:900px){.ia-layout{grid-template-columns:1fr;}.profile-layout{grid-template-columns:1fr;}.stats{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr;}.content{padding:12px;}.page-title{font-size:20px;}}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="s-logo" onclick="goTo('dashboard')">TF</div>
+  <div class="s-btn active" id="sb-dashboard" onclick="goTo('dashboard')" title="Dashboard">⬛</div>
+  <div class="s-btn" id="sb-pacientes" onclick="goTo('pacientes')" title="Pacientes">◈</div>
+  <div class="s-btn" id="sb-ia" onclick="goTo('ia')" title="IA Clínica">✦</div>
+  <div class="s-btn" id="sb-biblioteca" onclick="goTo('biblioteca')" title="Biblioteca">◧</div>
+  <div class="s-div"></div>
+  <div class="s-btn" id="sb-perfil" style="display:none;" onclick="goTo('perfil')" title="Perfil">👤</div>
+  <div class="s-bottom"><div class="s-av">D</div></div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb">
+      <span class="bc-link" onclick="goTo('dashboard')">tufisio</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-cur" id="bc-cur">dashboard</span>
+    </div>
+    <div class="topbar-right">
+      <div class="tb-search"><span style="color:var(--olive-lit)">⌕</span><input type="text" placeholder="Buscar paciente..." id="globalSearch" oninput="handleSearch(this.value)"></div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('mPaciente')">+ Paciente</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="content screen active" id="screen-dashboard">
+    <div class="page-hdr">
+      <div><div class="page-title">Buenos días, <span>Doctor</span></div><div class="page-sub"><span class="live"></span>tufisio v2.1 · <span id="fecha-hoy"></span> · ilustraciones clínicas activas</div></div>
+      <div class="hdr-actions">
+        <button class="btn btn-ghost btn-sm" onclick="exportData()">↓ Exportar</button>
+        <button class="btn btn-primary btn-sm" onclick="goTo('ia')">✦ Generar Plan IA</button>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-ico">◈</div><div class="stat-lbl">Pacientes activos</div><div class="stat-val" id="st-pac">0</div><div class="stat-sub">en tratamiento</div></div>
+      <div class="stat s-warn"><div class="stat-ico">◬</div><div class="stat-lbl">Con patologías</div><div class="stat-val" id="st-path">0</div><div class="stat-sub">atención extra</div></div>
+      <div class="stat s-success"><div class="stat-ico">◧</div><div class="stat-lbl">Ejercicios</div><div class="stat-val" id="st-ex">0</div><div class="stat-sub">en biblioteca</div></div>
+      <div class="stat s-danger"><div class="stat-ico">◩</div><div class="stat-lbl">Planes activos</div><div class="stat-val" id="st-pl">0</div><div class="stat-sub">asignados</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span style="color:var(--sage)">◈</span><span class="card-title">Mis Pacientes</span><span class="badge badge-info" id="db-badge">0</span><button class="card-act" onclick="goTo('pacientes')">ver todos →</button></div>
+      <div id="db-patients"></div>
+    </div>
+  </div>
+
+  <!-- PACIENTES -->
+  <div class="content screen" id="screen-pacientes">
+    <div class="page-hdr">
+      <div><div class="page-title"><span>Mis</span> Pacientes</div><div class="page-sub">expedientes clínicos · datos persistentes</div></div>
+      <div class="hdr-actions"><button class="btn btn-primary btn-sm" onclick="openModal('mPaciente')">+ Nuevo Paciente</button></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span style="color:var(--sage)">◈</span><span class="card-title">Registro</span><span class="badge badge-info" id="pac-badge">0</span></div>
+      <div id="pac-table"></div>
+    </div>
+  </div>
+
+  <!-- PERFIL -->
+  <div class="content screen" id="screen-perfil">
+    <div class="page-hdr">
+      <div><div class="page-title">Perfil <span>Clínico</span></div><div class="page-sub" id="perf-sub">—</div></div>
+      <div class="hdr-actions">
+        <button class="btn btn-ghost btn-sm" onclick="goTo('pacientes')">← Volver</button>
+        <button class="btn btn-ghost btn-sm" onclick="editarPacienteActual()">✏ Editar</button>
+        <button class="btn btn-primary btn-sm" onclick="openIAforPatient()">✦ Plan IA</button>
+      </div>
+    </div>
+    <div id="perf-content"></div>
+  </div>
+
+  <!-- IA -->
+  <div class="content screen" id="screen-ia">
+    <div class="page-hdr">
+      <div><div class="page-title">✦ IA <span>Clínica</span></div><div class="page-sub">protocolo basado en evidencia · APTA · ACSM · WCPT · ilustraciones automáticas</div></div>
+      <div class="hdr-actions"><button class="btn btn-ghost btn-sm" onclick="goTo('dashboard')">← Dashboard</button></div>
+    </div>
+    <div class="ia-layout">
+      <div class="ia-form-card">
+        <div class="ia-form-hdr"><div class="ia-title">✦ Perfil del Paciente</div><div class="ia-sub">la IA adapta todo a este perfil</div></div>
+        <div class="ia-body">
+          <div class="form-grp">
+            <label class="form-lbl">Paciente registrado</label>
+            <select class="form-sel" id="ia-sel" onchange="loadPatientIA()"><option value="">— Manual —</option></select>
+          </div>
+          <div class="form-row">
+            <div class="form-grp"><label class="form-lbl">Edad</label><input class="form-inp" id="ia-edad" type="number" placeholder="45"></div>
+            <div class="form-grp"><label class="form-lbl">Peso kg</label><input class="form-inp" id="ia-peso" type="number" placeholder="78"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-grp"><label class="form-lbl">Estatura cm</label><input class="form-inp" id="ia-talla" type="number" placeholder="170"></div>
+            <div class="form-grp"><label class="form-lbl">Sexo</label><select class="form-sel" id="ia-sexo"><option>Femenino</option><option>Masculino</option></select></div>
+          </div>
+          <div class="form-grp"><label class="form-lbl">Diagnóstico</label>
+            <select class="form-sel" id="ia-dx">
+              <option value="ptr">Post-op PTR (rodilla total)</option>
+              <option value="ptc">Post-op PTC (cadera total)</option>
+              <option value="lca">Reconstrucción LCA</option>
+              <option value="menisco">Reparación meniscal</option>
+              <option value="manguito">Manguito rotador</option>
+              <option value="hombro_adhesivo">Hombro adhesivo</option>
+              <option value="lumbalgia">Lumbalgia crónica</option>
+              <option value="hernia">Hernia discal lumbar</option>
+              <option value="cervicalgia">Cervicalgia</option>
+              <option value="deportivo_rodilla">Lesión deportiva rodilla</option>
+              <option value="deportivo_hombro">Lesión deportiva hombro</option>
+              <option value="adulto_mayor">Adulto mayor — equilibrio</option>
+              <option value="fractura_cadera">Post-fractura cadera</option>
+              <option value="tobillo">Esguince / tobillo</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-grp"><label class="form-lbl">Fase rehab</label>
+              <select class="form-sel" id="ia-fase">
+                <option value="1">F1 — Aguda</option><option value="2">F2 — Subaguda</option>
+                <option value="3" selected>F3 — Fortalecimiento</option><option value="4">F4 — Funcional</option><option value="5">F5 — Retorno</option>
+              </select>
+            </div>
+            <div class="form-grp"><label class="form-lbl">Actividad</label>
+              <select class="form-sel" id="ia-act">
+                <option>Sedentario</option><option>Poco activo</option>
+                <option selected>Moderado</option><option>Muy activo</option><option>Deportista élite</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grp"><label class="form-lbl">Comorbilidades</label>
+            <div class="patho-grid" id="ia-pathos">
+              <label class="pc-check"><input type="checkbox" value="DM2" onchange="this.parentElement.classList.toggle('sel',this.checked)">DM2</label>
+              <label class="pc-check"><input type="checkbox" value="HTA" onchange="this.parentElement.classList.toggle('sel',this.checked)">HTA</label>
+              <label class="pc-check"><input type="checkbox" value="Osteoporosis" onchange="this.parentElement.classList.toggle('sel',this.checked)">Osteoporosis</label>
+              <label class="pc-check"><input type="checkbox" value="Obesidad" onchange="this.parentElement.classList.toggle('sel',this.checked)">Obesidad</label>
+              <label class="pc-check"><input type="checkbox" value="EPOC" onchange="this.parentElement.classList.toggle('sel',this.checked)">EPOC</label>
+              <label class="pc-check"><input type="checkbox" value="IC" onchange="this.parentElement.classList.toggle('sel',this.checked)">Insuf.Cardíaca</label>
+              <label class="pc-check"><input type="checkbox" value="Neuropatia" onchange="this.parentElement.classList.toggle('sel',this.checked)">Neuropatía</label>
+            </div>
+          </div>
+          <div class="form-grp"><label class="form-lbl">Medicamentos</label><input class="form-inp" id="ia-meds" placeholder="Metformina, Enalapril..."></div>
+          <div class="form-grp"><label class="form-lbl">Notas clínicas</label><textarea class="form-ta" id="ia-notas" placeholder="EVA, ROM, objetivos..."></textarea></div>
+          <button class="btn-glow" id="ia-btn" onclick="generarPlan()">
+            <span id="ia-btn-txt">✦ Generar Protocolo con IA</span>
+            <div class="spinner-wrap" id="ia-spinner"><div class="spinner"></div><span style="font-size:11px;">Analizando perfil...</span></div>
+          </button>
+        </div>
+      </div>
+      <div id="ia-result">
+        <div class="result-empty">
+          <div class="result-ico">✦</div>
+          <div class="result-title">Motor IA Clínica listo</div>
+          <div class="result-sub">Completa el perfil y genera un protocolo personalizado.<br><br>Cada ejercicio incluirá una <strong style="color:var(--sage)">ilustración clínica animada</strong> generada específicamente para ese movimiento, con flechas de dirección y zona muscular destacada.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BIBLIOTECA -->
+  <div class="content screen" id="screen-biblioteca">
+    <div class="page-hdr">
+      <div><div class="page-title">Biblioteca de <span>Ejercicios</span></div><div class="page-sub"><span id="lib-count">0</span> ejercicios · ilustraciones clínicas animadas</div></div>
+      <div class="hdr-actions"><button class="btn btn-primary btn-sm" onclick="openModal('mEjercicio')">+ Agregar</button></div>
+    </div>
+    <div class="filter-tabs" id="ftabs">
+      <div class="ftab active" onclick="filtrar('')" data-f="">Todos</div>
+      <div class="ftab" onclick="filtrar('rodilla')" data-f="rodilla">🦵 Rodilla</div>
+      <div class="ftab" onclick="filtrar('hombro')" data-f="hombro">💪 Hombro</div>
+      <div class="ftab" onclick="filtrar('columna')" data-f="columna">🦴 Columna</div>
+      <div class="ftab" onclick="filtrar('cadera')" data-f="cadera">🦴 Cadera</div>
+      <div class="ftab" onclick="filtrar('tobillo')" data-f="tobillo">🦶 Tobillo</div>
+      <div class="ftab" onclick="filtrar('deportivo')" data-f="deportivo">⚡ Deportivo</div>
+      <div class="ftab" onclick="filtrar('am')" data-f="am">🧓 Adulto Mayor</div>
+      <div class="ftab" onclick="filtrar('general')" data-f="general">🔄 General</div>
+    </div>
+    <div id="lib-grid"></div>
+  </div>
+
+  <div class="statusbar">
+    <span><span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--success);margin-right:4px;"></span>activo</span>
+    <span style="color:var(--border)">|</span><span>ilustraciones ia · evidencia apta/acsm</span>
+    <span style="color:var(--border)">|</span><span id="sb-info">0 pacientes</span>
+    <span style="margin-left:auto">tufisio v2.1</span>
+  </div>
+</div>
+</div>
+
+<!-- MODAL PACIENTE -->
+<div class="overlay" id="mPaciente">
+<div class="modal">
+  <div class="modal-hdr"><div class="modal-title" id="mp-title">+ Nuevo Paciente</div><div class="modal-close" onclick="closeModal('mPaciente')">✕</div></div>
+  <div class="modal-body">
+    <input type="hidden" id="p-id">
+    <div class="form-section">Datos personales</div>
+    <div class="form-row"><div class="form-grp"><label class="form-lbl">Nombre *</label><input class="form-inp" id="p-nombre" placeholder="Nombre completo"></div><div class="form-grp"><label class="form-lbl">Edad *</label><input class="form-inp" id="p-edad" type="number" placeholder="67"></div></div>
+    <div class="form-row3">
+      <div class="form-grp"><label class="form-lbl">Peso kg</label><input class="form-inp" id="p-peso" type="number" placeholder="72"></div>
+      <div class="form-grp"><label class="form-lbl">Estatura cm</label><input class="form-inp" id="p-talla" type="number" placeholder="158"></div>
+      <div class="form-grp"><label class="form-lbl">Teléfono</label><input class="form-inp" id="p-tel" placeholder="222 123 4567"></div>
+    </div>
+    <div class="form-section">Diagnóstico</div>
+    <div class="form-grp"><label class="form-lbl">Diagnóstico *</label><input class="form-inp" id="p-dx" placeholder="Ej: Post-op PTR rodilla derecha"></div>
+    <div class="form-row">
+      <div class="form-grp"><label class="form-lbl">Fase</label><select class="form-sel" id="p-fase"><option value="1">F1 Aguda</option><option value="2">F2 Subaguda</option><option value="3" selected>F3 Fortalecimiento</option><option value="4">F4 Funcional</option><option value="5">F5 Alta</option></select></div>
+      <div class="form-grp"><label class="form-lbl">Actividad</label><select class="form-sel" id="p-act"><option>Sedentario</option><option>Poco activo</option><option selected>Moderado</option><option>Muy activo</option><option>Deportista</option></select></div>
+    </div>
+    <div class="form-section">Patologías</div>
+    <div class="patho-grid" id="p-pathos">
+      <label class="pc-check"><input type="checkbox" value="DM2" onchange="this.parentElement.classList.toggle('sel',this.checked)">DM2</label>
+      <label class="pc-check"><input type="checkbox" value="HTA" onchange="this.parentElement.classList.toggle('sel',this.checked)">HTA</label>
+      <label class="pc-check"><input type="checkbox" value="Osteoporosis" onchange="this.parentElement.classList.toggle('sel',this.checked)">Osteoporosis</label>
+      <label class="pc-check"><input type="checkbox" value="Neuropatía" onchange="this.parentElement.classList.toggle('sel',this.checked)">Neuropatía</label>
+      <label class="pc-check"><input type="checkbox" value="EPOC" onchange="this.parentElement.classList.toggle('sel',this.checked)">EPOC</label>
+      <label class="pc-check"><input type="checkbox" value="IC" onchange="this.parentElement.classList.toggle('sel',this.checked)">Insuf. Cardíaca</label>
+      <label class="pc-check"><input type="checkbox" value="Obesidad" onchange="this.parentElement.classList.toggle('sel',this.checked)">Obesidad</label>
+      <label class="pc-check"><input type="checkbox" value="Fibromialgia" onchange="this.parentElement.classList.toggle('sel',this.checked)">Fibromialgia</label>
+    </div>
+    <div class="form-section">Clínico</div>
+    <div class="form-grp"><label class="form-lbl">Medicamentos</label><input class="form-inp" id="p-meds" placeholder="Metformina 850mg, Enalapril 10mg..."></div>
+    <div class="form-grp"><label class="form-lbl">Contraindicaciones</label><textarea class="form-ta" id="p-contra" placeholder="Restricciones importantes..."></textarea></div>
+    <div class="form-grp"><label class="form-lbl">Notas clínicas</label><textarea class="form-ta" id="p-notas" placeholder="Observaciones..."></textarea></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('mPaciente')">Cancelar</button><button class="btn btn-primary" onclick="guardarPaciente()">Guardar</button></div>
+</div>
+</div>
+
+<!-- MODAL NOTA -->
+<div class="overlay" id="mNota">
+<div class="modal" style="max-width:400px;">
+  <div class="modal-hdr"><div class="modal-title">+ Nota Clínica</div><div class="modal-close" onclick="closeModal('mNota')">✕</div></div>
+  <div class="modal-body"><div class="form-grp"><label class="form-lbl">Nota</label><textarea class="form-ta" id="nota-txt" style="min-height:90px;" placeholder="Observación clínica..."></textarea></div></div>
+  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('mNota')">Cancelar</button><button class="btn btn-primary" onclick="guardarNota()">Guardar</button></div>
+</div>
+</div>
+
+<!-- MODAL EJERCICIO -->
+<div class="overlay" id="mEjercicio">
+<div class="modal">
+  <div class="modal-hdr"><div class="modal-title" id="me-title">+ Nuevo Ejercicio</div><div class="modal-close" onclick="closeModal('mEjercicio')">✕</div></div>
+  <div class="modal-body">
+    <input type="hidden" id="e-id">
+    <div class="form-grp"><label class="form-lbl">Nombre *</label><input class="form-inp" id="e-nombre" placeholder="Ej: Extensión de rodilla arco parcial"></div>
+    <div class="form-row">
+      <div class="form-grp"><label class="form-lbl">Región</label><select class="form-sel" id="e-region"><option value="rodilla">🦵 Rodilla</option><option value="hombro">💪 Hombro</option><option value="columna">🦴 Columna</option><option value="cadera">🦴 Cadera</option><option value="tobillo">🦶 Tobillo</option><option value="deportivo">⚡ Deportivo</option><option value="am">🧓 Adulto Mayor</option><option value="general">🔄 General</option></select></div>
+      <div class="form-grp"><label class="form-lbl">Tipo</label><select class="form-sel" id="e-tipo"><option>Fortalecimiento</option><option>Movilidad</option><option>Estiramiento</option><option>Propiocepción</option><option>Cardio/Marcha</option><option>Funcional</option><option>Pliométrico</option></select></div>
+    </div>
+    <div class="form-row3">
+      <div class="form-grp"><label class="form-lbl">Series</label><input class="form-inp" id="e-series" placeholder="3"></div>
+      <div class="form-grp"><label class="form-lbl">Reps</label><input class="form-inp" id="e-reps" placeholder="12 reps"></div>
+      <div class="form-grp"><label class="form-lbl">Descanso</label><input class="form-inp" id="e-descanso" placeholder="60 seg"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-grp"><label class="form-lbl">RPE</label><input class="form-inp" id="e-rpe" placeholder="RPE 11-13"></div>
+      <div class="form-grp"><label class="form-lbl">Evidencia</label><select class="form-sel" id="e-evidencia"><option value="A">A — Alta</option><option value="B" selected>B — Moderada</option><option value="C">C — Baja</option></select></div>
+    </div>
+    <div class="form-grp"><label class="form-lbl">Instrucciones para el paciente</label><textarea class="form-ta" id="e-instruc" placeholder="Paso a paso claro y sencillo..."></textarea></div>
+    <div class="form-grp"><label class="form-lbl">Precauciones</label><input class="form-inp" id="e-prec" placeholder="Suspender si EVA >6/10..."></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('mEjercicio')">Cancelar</button><button class="btn btn-primary" onclick="guardarEjercicio()">Guardar</button></div>
+</div>
+</div>
+
+<div class="confirm-overlay" id="confirmDlg">
+  <div class="confirm-box">
+    <div class="confirm-title" id="cf-title">¿Confirmar?</div>
+    <div class="confirm-text" id="cf-text">Esta acción no se puede deshacer.</div>
+    <div class="confirm-btns"><button class="btn btn-ghost btn-sm" onclick="closeConfirm()">Cancelar</button><button class="btn btn-danger btn-sm" id="cf-ok">Eliminar</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ─── Wger.de image map (real illustrated PNGs, CC-BY-SA, no API key) ────
+const WGER = {
+  ext_rodilla:      'https://wger.de/media/exercise-images/193/Leg-Extension-1.png',
+  sentadilla:       'https://wger.de/media/exercise-images/37/Squat-1.png',
+  elevacion_pierna: 'https://wger.de/media/exercise-images/194/Leg-Raise-1.png',
+  puente:           'https://wger.de/media/exercise-images/345/Glute-Bridge-1.png',
+  isquiotibiales:   'https://wger.de/media/exercise-images/197/Lying-Leg-Curl-1.png',
+  prensa:           'https://wger.de/media/exercise-images/197/Lying-Leg-Curl-1.png',
+  step_up:          'https://wger.de/media/exercise-images/350/Step-Up-1.png',
+  zancada:          'https://wger.de/media/exercise-images/99/Lunge-1.png',
+  calf_raises:      'https://wger.de/media/exercise-images/65/Calf-Raise-1.png',
+  equilibrio:       'https://wger.de/media/exercise-images/370/Single-Leg-Deadlift-1.png',
+  plancha:          'https://wger.de/media/exercise-images/105/Plank-1.png',
+  bird_dog:         'https://wger.de/media/exercise-images/373/Bird-Dog-1.png',
+  remo:             'https://wger.de/media/exercise-images/124/Dumbbell-Row-1.png',
+  elev_lateral:     'https://wger.de/media/exercise-images/74/Lateral-Raise-1.png',
+  press_hombro:     'https://wger.de/media/exercise-images/75/Shoulder-Press-1.png',
+  curl_bicep:       'https://wger.de/media/exercise-images/66/Bicep-Curl-1.png',
+  chair_stand:      'https://wger.de/media/exercise-images/37/Squat-1.png',
+  marcha_lateral:   'https://wger.de/media/exercise-images/99/Lunge-1.png',
+  abduccion:        'https://wger.de/media/exercise-images/194/Leg-Raise-1.png',
+  rotacion_ext:     'https://wger.de/media/exercise-images/74/Lateral-Raise-1.png',
+  press_pecho:      'https://wger.de/media/exercise-images/75/Shoulder-Press-1.png',
+};
+
+// ─── Get exercise illustration: wger image → SVG fallback ────────────────
+// When running on a real host (GitHub Pages, etc.) wger images load fine.
+// Inside Claude.ai viewer external URLs are blocked → SVG fallback is used.
+function getExSVG(key) {
+  const wgerUrl = WGER[key];
+  if (wgerUrl) {
+    // Return an img that loads wger PNG, falls back to inline SVG on error
+    const svgEl = document.getElementById('tpl-' + key) || document.getElementById('tpl-default');
+    const svgFallback = svgEl ? svgEl.innerHTML.replace(/"/g,"'") : '';
+    return `<img src="${wgerUrl}" 
+      alt="${key}" 
+      style="width:100%;height:100%;object-fit:contain;background:#111;opacity:0;transition:opacity 0.3s;"
+      onload="this.style.opacity=1;this.nextSibling&&(this.nextSibling.style.display='none')"
+      onerror="this.style.display='none';this.nextSibling&&(this.nextSibling.style.display='flex')"
+    /><div class="svg-fb" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">${svgFallback}</div>`;
+  }
+  const el = document.getElementById('tpl-' + key);
+  if (el) return el.innerHTML;
+  const df = document.getElementById('tpl-default');
+  return df ? df.innerHTML : '';
+}
+function imgPlaceholder(n, r, t) { return getExSVG('default'); }
+function exImg(u, a, n, r, t) { return ''; }
+
+
+function exImg(url, alt, nombre, region, tipo) {
+  // All SVGs are inline - no network needed
+  return "";
+}
+
+
+// ILLUS — thin wrappers that return real photo HTML
+const ILLUS = {
+  ext_rodilla:         ()=>getExSVG("ext_rodilla"),
+  sentadilla_silla:    ()=>getExSVG("sentadilla"),
+  elevacion_pierna:    ()=>getExSVG("elevacion_pierna"),
+  puente_gluteos:      ()=>getExSVG("puente"),
+  isquiotibiales:      ()=>getExSVG("isquiotibiales"),
+  prensa:              ()=>getExSVG("prensa"),
+  step_up:             ()=>getExSVG("step_up"),
+  marcha_lateral_banda:()=>getExSVG("marcha_lateral"),
+  clam_shell:          ()=>getExSVG("clam_shell"),
+  equilibrio_monopodal:()=>getExSVG("equilibrio"),
+  zancada:             ()=>getExSVG("zancada"),
+  est_cuadriceps:      ()=>getExSVG("est_cuadriceps"),
+  flexion_activa_rodilla:()=>getExSVG("flexion_rodilla"),
+  tandem:              ()=>getExSVG("tandem"),
+  pendulo_codman:      ()=>getExSVG("pendulo"),
+  rotacion_externa:    ()=>getExSVG("rotacion_ext"),
+  elevacion_lateral:   ()=>getExSVG("elev_lateral"),
+  press_hombro:        ()=>getExSVG("press_hombro"),
+  flexion_hombro:      ()=>getExSVG("flexion_hombro"),
+  estiramiento_hombro: ()=>getExSVG("est_hombro"),
+  wall_slides:         ()=>getExSVG("wall_slides"),
+  remo_banda:          ()=>getExSVG("remo"),
+  press_pecho:         ()=>getExSVG("press_pecho"),
+  movilizacion_gh:     ()=>getExSVG("movilizacion_gh"),
+  cat_cow:             ()=>getExSVG("cat_cow"),
+  bird_dog:            ()=>getExSVG("bird_dog"),
+  plancha:             ()=>getExSVG("plancha"),
+  dead_bug:            ()=>getExSVG("dead_bug"),
+  ext_lumbar:          ()=>getExSVG("ext_lumbar"),
+  retraccion_cervical: ()=>getExSVG("cervical"),
+  est_isquio:          ()=>getExSVG("est_isquio"),
+  abduccion_cadera:    ()=>getExSVG("abduccion"),
+  ext_cuadrupedia_cadera:()=>getExSVG("ext_cadera"),
+  est_piriforme:       ()=>getExSVG("piriforme"),
+  marcha_rodillas:     ()=>getExSVG("marcha_am"),
+  calf_raises:         ()=>getExSVG("calf_raises"),
+  alfabeto_tobillo:    ()=>getExSVG("alfabeto"),
+  banda_tobillo:       ()=>getExSVG("banda_tobillo"),
+  est_pantorrilla:     ()=>getExSVG("est_pantorrilla"),
+  squat_jump:          ()=>getExSVG("squat_jump"),
+  carrera:             ()=>getExSVG("carrera"),
+  chair_stand:         ()=>getExSVG("chair_stand"),
+  core_silla:          ()=>getExSVG("core_silla"),
+  curl_bicep:          ()=>getExSVG("curl_bicep"),
+  caminata:            ()=>getExSVG("caminata"),
+  marcha_am:           ()=>getExSVG("marcha_am"),
+  respiracion:         ()=>getExSVG("respiracion"),
+  default_exercise:    ()=>getExSVG("default"),
+};
+
+// Map exercise names/types to illustrations — comprehensive keyword matching
+function getIllustration(nombre, region, tipo) {
+  const n = (nombre||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // strip accents for matching
+  const r = (region||'').toLowerCase();
+  const t = (tipo||'').toLowerCase();
+
+  // ── EXACT / HIGH-CONFIDENCE MATCHES ──────────────────────────
+  // Rodilla
+  if((n.includes('extension') || n.includes('extender')) && n.includes('rodilla')) return ILLUS.ext_rodilla();
+  if(n.includes('sentadilla')) return ILLUS.sentadilla_silla();
+  if(n.includes('chair stand') || n.includes('levantarse') && n.includes('silla')) return ILLUS.chair_stand();
+  if(n.includes('elevacion') && (n.includes('pierna') || n.includes('miembro'))) return ILLUS.elevacion_pierna();
+  if(n.includes('puente') || n.includes('bridging') || n.includes('bridge')) return ILLUS.puente_gluteos();
+  if(n.includes('isquiotibial') || n.includes('hamstring') || n.includes('curl prone') || (n.includes('curl') && r.includes('rodilla'))) return ILLUS.isquiotibiales();
+  if(n.includes('prensa') || n.includes('leg press')) return ILLUS.prensa();
+  if(n.includes('step') && (n.includes('up') || n.includes('-up'))) return ILLUS.step_up();
+  if(n.includes('marcha lateral') || n.includes('lateral band') || (n.includes('lateral') && n.includes('banda'))) return ILLUS.marcha_lateral_banda();
+  if(n.includes('clam') || n.includes('almeja')) return ILLUS.clam_shell();
+  if(n.includes('flexion') && n.includes('activ') && r.includes('rodilla')) return ILLUS.flexion_activa_rodilla();
+  if(n.includes('estiramiento') && n.includes('cuadricep')) return ILLUS.est_cuadriceps();
+  if(n.includes('zancada') || n.includes('lunge')) return ILLUS.zancada();
+
+  // Equilibrio / propiocepción
+  if(n.includes('equilibrio') || n.includes('monopodal') || n.includes('balance')) return ILLUS.equilibrio_monopodal();
+  if(n.includes('tandem') || n.includes('tándem')) return ILLUS.tandem();
+
+  // Hombro
+  if(n.includes('pendulo') || n.includes('codman')) return ILLUS.pendulo_codman();
+  if((n.includes('rotacion') || n.includes('rotation')) && n.includes('extern')) return ILLUS.rotacion_externa();
+  if((n.includes('rotacion') || n.includes('rotation')) && n.includes('intern')) return ILLUS.rotacion_externa();
+  if(n.includes('elevacion lateral') || n.includes('abduccion') && r.includes('hombro')) return ILLUS.elevacion_lateral();
+  if(n.includes('press') && (n.includes('hombro') || n.includes('shoulder') || n.includes('deltoid'))) return ILLUS.press_hombro();
+  if(n.includes('flexion') && (n.includes('hombro') || n.includes('baston') || n.includes('asistida') && r.includes('hombro'))) return ILLUS.flexion_hombro();
+  if(n.includes('estiramiento') && (n.includes('cruzado') || n.includes('cross'))) return ILLUS.estiramiento_hombro();
+  if(n.includes('glenohumeral') || n.includes('movilizacion') && r.includes('hombro')) return ILLUS.movilizacion_gh();
+  if(n.includes('wall slide') || n.includes('slide') && n.includes('pared')) return ILLUS.wall_slides();
+  if(n.includes('remo') || n.includes('row')) return ILLUS.remo_banda();
+  if(n.includes('press') && (n.includes('pecho') || n.includes('chest') || n.includes('bench'))) return ILLUS.press_pecho();
+  if(n.includes('elevacion lateral')) return ILLUS.elevacion_lateral();
+
+  // Columna
+  if(n.includes('cat') || n.includes('cow') || (n.includes('cuadrupedia') && (n.includes('movil') || n.includes('flex')))) return ILLUS.cat_cow();
+  if(n.includes('bird') || n.includes('dog') || (n.includes('cuadrupedia') && n.includes('estabil'))) return ILLUS.bird_dog();
+  if(n.includes('plancha') || n.includes('plank')) return ILLUS.plancha();
+  if(n.includes('dead bug') || n.includes('deadbug')) return ILLUS.dead_bug();
+  if(n.includes('extension') && n.includes('lumbar')) return ILLUS.ext_lumbar();
+  if(n.includes('extension') && r.includes('columna')) return ILLUS.ext_lumbar();
+  if(n.includes('retraccion') && n.includes('cervical')) return ILLUS.retraccion_cervical();
+  if(n.includes('cervical') || r.includes('cervical')) return ILLUS.retraccion_cervical();
+  if(n.includes('estiramiento') && n.includes('isquiotibial')) return ILLUS.est_isquio();
+
+  // Cadera
+  if(n.includes('abduccion') && r.includes('cadera')) return ILLUS.abduccion_cadera();
+  if(n.includes('abduccion')) return ILLUS.abduccion_cadera();
+  if(n.includes('extension') && r.includes('cadera')) return ILLUS.ext_cuadrupedia_cadera();
+  if(n.includes('extension cuadrupedia') || (n.includes('extension') && n.includes('cuadrup'))) return ILLUS.ext_cuadrupedia_cadera();
+  if(n.includes('piriforme') || n.includes('figura 4') || n.includes('fig') && n.includes('4')) return ILLUS.est_piriforme();
+  if(n.includes('marcha') && (n.includes('rodillas') || n.includes('altas') || n.includes('high'))) return ILLUS.marcha_am();
+
+  // Tobillo
+  if(n.includes('calf') || n.includes('talon') || n.includes('puntillas') || n.includes('pantorrilla') && n.includes('elevar')) return ILLUS.calf_raises();
+  if(n.includes('alfabeto') || (n.includes('abecedario') && r.includes('tobillo'))) return ILLUS.alfabeto_tobillo();
+  if(n.includes('inversion') || n.includes('eversion') || (n.includes('banda') && r.includes('tobillo'))) return ILLUS.banda_tobillo();
+  if(n.includes('estiramiento') && n.includes('pantorrill')) return ILLUS.est_pantorrilla();
+  if(n.includes('estiramiento') && r.includes('tobillo')) return ILLUS.est_pantorrilla();
+
+  // Deportivo
+  if(n.includes('squat jump') || (n.includes('salto') && n.includes('sentadilla'))) return ILLUS.squat_jump();
+  if(n.includes('carrera') || n.includes('running') || n.includes('jogging') || n.includes('trote')) return ILLUS.carrera();
+
+  // Adulto mayor
+  if(n.includes('chair stand') || n.includes('levantarse silla')) return ILLUS.chair_stand();
+  if(n.includes('core') && n.includes('silla')) return ILLUS.core_silla();
+  if(n.includes('curl') && (n.includes('bicep') || n.includes('biceps') || n.includes('mancuerna') || n.includes('codo'))) return ILLUS.curl_bicep();
+  if(n.includes('caminata') || (n.includes('caminar') && !n.includes('lateral'))) return ILLUS.caminata();
+
+  // General
+  if(n.includes('respiracion') || n.includes('diafragmatica') || n.includes('diaphragm')) return ILLUS.respiracion();
+
+  // ── REGION + TYPE FALLBACKS ───────────────────────────────────
+  if(r.includes('rodilla')){
+    if(t.includes('movil') || t.includes('estir')) return ILLUS.flexion_activa_rodilla();
+    if(t.includes('propio') || t.includes('equil')) return ILLUS.equilibrio_monopodal();
+    if(t.includes('fort') || t.includes('func')) return ILLUS.ext_rodilla();
+    return ILLUS.ext_rodilla();
+  }
+  if(r.includes('hombro')){
+    if(t.includes('movil')) return ILLUS.pendulo_codman();
+    if(t.includes('estir')) return ILLUS.estiramiento_hombro();
+    if(t.includes('fort') || t.includes('func')) return ILLUS.rotacion_externa();
+    return ILLUS.rotacion_externa();
+  }
+  if(r.includes('columna')){
+    if(t.includes('fort')) return ILLUS.bird_dog();
+    if(t.includes('movil')) return ILLUS.cat_cow();
+    return ILLUS.cat_cow();
+  }
+  if(r.includes('cadera')){
+    if(t.includes('fort')) return ILLUS.abduccion_cadera();
+    if(t.includes('estir')) return ILLUS.est_piriforme();
+    return ILLUS.abduccion_cadera();
+  }
+  if(r.includes('tobillo')){
+    if(t.includes('fort')) return ILLUS.calf_raises();
+    if(t.includes('movil')) return ILLUS.alfabeto_tobillo();
+    if(t.includes('propio') || t.includes('equil')) return ILLUS.equilibrio_monopodal();
+    return ILLUS.calf_raises();
+  }
+  if(r.includes('deportivo')){
+    if(t.includes('pliomet') || t.includes('salto')) return ILLUS.squat_jump();
+    if(t.includes('cardio') || t.includes('marcha')) return ILLUS.carrera();
+    if(t.includes('fort')) return ILLUS.zancada();
+    return ILLUS.zancada();
+  }
+  if(r.includes('am') || r.includes('adulto')){
+    if(t.includes('cardio') || t.includes('marcha')) return ILLUS.marcha_am();
+    if(t.includes('equil') || t.includes('propio')) return ILLUS.tandem();
+    if(t.includes('fort')) return ILLUS.chair_stand();
+    return ILLUS.chair_stand();
+  }
+  if(r.includes('general')){
+    if(t.includes('respiracion') || t.includes('relajacion')) return ILLUS.respiracion();
+    if(t.includes('cardio') || t.includes('marcha')) return ILLUS.caminata();
+    if(t.includes('estir')) return ILLUS.est_pantorrilla();
+    if(t.includes('fort')) return ILLUS.plancha();
+    return ILLUS.respiracion();
+  }
+
+  // ── UNIVERSAL LAST RESORT ──────────────────────────────────────
+  if(n.includes('marcha') || n.includes('caminar')) return ILLUS.caminata();
+  if(n.includes('estiramiento') || n.includes('stretch')) return ILLUS.est_pantorrilla();
+  if(n.includes('banda') || n.includes('resistencia') || n.includes('elastica')) return ILLUS.remo_banda();
+  if(n.includes('propio') || n.includes('equil') || n.includes('balance')) return ILLUS.equilibrio_monopodal();
+  if(n.includes('core') || n.includes('abdomen') || n.includes('lumbar')) return ILLUS.plancha();
+  if(n.includes('press') || n.includes('empuje')) return ILLUS.press_hombro();
+  if(n.includes('extension') || n.includes('extensor')) return ILLUS.ext_rodilla();
+  if(n.includes('flexion') || n.includes('flexor')) return ILLUS.flexion_activa_rodilla();
+  return ILLUS.default_exercise();
+}
+
+// ════════════════════════════════════
+// EXERCISE DATABASE
+// ════════════════════════════════════
+const BIBLIOTECA = [
+  {id:'r01',nombre:'Extensión de rodilla arco parcial 0-60°',region:'rodilla',tipo:'Fortalecimiento',series:'3',reps:'12 reps',descanso:'60 seg',rpe:'RPE 11',instrucciones:'Siéntate en la orilla de la silla. Extiende la pierna hasta 60° lentamente, sostén 2 segundos en la cima, baja despacio.',precauciones:'No sobrepasar 60° en Fase 1-3. Suspender si EVA >6/10.',evidencia:'A',dx:['ptr','lca','menisco']},
+  {id:'r02',nombre:'Sentadilla asistida en silla 0-45°',region:'rodilla',tipo:'Fortalecimiento',series:'3',reps:'10 reps',descanso:'60 seg',rpe:'RPE 12',instrucciones:'Párate frente a la silla, desciende lentamente hasta casi sentarte. Mantén 1 segundo, sube controlado.',precauciones:'Rodillas no sobrepasar los dedos. No en Fase 1.',evidencia:'A',dx:['ptr','lca','deportivo_rodilla']},
+  {id:'r03',nombre:'Elevación de pierna en decúbito supino',region:'rodilla',tipo:'Fortalecimiento',series:'3',reps:'15 reps',descanso:'45 seg',rpe:'RPE 10',instrucciones:'Acuéstate boca arriba, tensa el cuádriceps y eleva la pierna a 45°. Mantén 2 segundos, baja lento.',precauciones:'Sin carga articular. Ideal Fase 1.',evidencia:'A',dx:['ptr','lca','menisco']},
+  {id:'r04',nombre:'Puente de glúteos en supino',region:'rodilla',tipo:'Fortalecimiento',series:'3',reps:'15 reps',descanso:'45 seg',rpe:'RPE 11',instrucciones:'Acuéstate boca arriba, rodillas dobladas. Aprieta glúteos y eleva caderas hasta línea recta. Sostén 2 seg.',precauciones:'No hiperextender. Activar core primero.',evidencia:'A',dx:['ptr','lumbalgia','hernia']},
+  {id:'r05',nombre:'Equilibrio monopodal con apoyo',region:'rodilla',tipo:'Propiocepción',series:'3',reps:'30 seg c/lado',descanso:'30 seg',rpe:'RPE 10',instrucciones:'Párate en la pierna afectada con apoyo ligero en pared. Sostén 30 segundos. Progresa a sin apoyo.',precauciones:'Siempre cerca de pared. No en piso mojado.',evidencia:'A',dx:['ptr','lca','tobillo']},
+  {id:'h01',nombre:'Péndulo de Codman en cuadrupedia',region:'hombro',tipo:'Movilidad',series:'3',reps:'2 min',descanso:'60 seg',rpe:'RPE 8',instrucciones:'Inclínate sobre una mesa. Deja colgar el brazo afectado y realiza pequeños círculos con la gravedad, sin mover activamente el hombro.',precauciones:'Solo movimiento pasivo. Fase 1 post-cirugía.',evidencia:'A',dx:['manguito','hombro_adhesivo']},
+  {id:'h02',nombre:'Rotación externa con banda elástica',region:'hombro',tipo:'Fortalecimiento',series:'3',reps:'15 reps',descanso:'60 seg',rpe:'RPE 12',instrucciones:'De pie con codo en 90° pegado al costado. Rota el antebrazo hacia afuera contra la resistencia. Regresa lento.',precauciones:'Codo siempre pegado al cuerpo.',evidencia:'A',dx:['manguito','deportivo_hombro']},
+  {id:'h03',nombre:'Elevación lateral de hombro hasta 90°',region:'hombro',tipo:'Fortalecimiento',series:'3',reps:'12 reps',descanso:'60 seg',rpe:'RPE 12',instrucciones:'Eleva el brazo lateralmente con codo ligeramente doblado hasta 90°. Baja controlado.',precauciones:'No sobrepasar 90° con conflicto subacromial.',evidencia:'A',dx:['manguito','deportivo_hombro']},
+  {id:'c01',nombre:'Cat-Cow flexoextensión en cuadrupedia',region:'columna',tipo:'Movilidad',series:'3',reps:'15 reps',descanso:'30 seg',rpe:'RPE 8',instrucciones:'En cuatro patas, alterna arquear la espalda hacia arriba (cat) y hundir el abdomen arqueando hacia abajo (cow). Movimiento fluido.',precauciones:'Movimiento suave. Sin dolor agudo.',evidencia:'A',dx:['lumbalgia','hernia']},
+  {id:'c02',nombre:'Bird-Dog estabilización en cuadrupedia',region:'columna',tipo:'Fortalecimiento',series:'3',reps:'10 reps c/lado',descanso:'45 seg',rpe:'RPE 11',instrucciones:'En cuatro patas, extiende simultáneamente brazo derecho y pierna izquierda paralelos al suelo. Sostén 3 seg. Alterna.',precauciones:'Columna neutral todo el tiempo.',evidencia:'A',dx:['lumbalgia','hernia']},
+  {id:'c03',nombre:'Plancha frontal en rodillas',region:'columna',tipo:'Fortalecimiento',series:'3',reps:'30 seg',descanso:'60 seg',rpe:'RPE 12',instrucciones:'Apoya antebrazos y rodillas. Activa abdominales y glúteos formando línea recta. Sostén 30 segundos. Respira.',precauciones:'No hundir ni elevar caderas. Respirar constantemente.',evidencia:'A',dx:['lumbalgia','hernia']},
+  {id:'ca01',nombre:'Abducción de cadera en decúbito lateral',region:'cadera',tipo:'Fortalecimiento',series:'3',reps:'15 reps',descanso:'45 seg',rpe:'RPE 11',instrucciones:'Acuéstate de lado. Eleva la pierna de arriba a 30-40° con pie en posición neutral. Baja lento.',precauciones:'No rotar la pelvis. Movimiento puro de cadera.',evidencia:'A',dx:['ptc','adulto_mayor']},
+  {id:'t01',nombre:'Elevación de talones bilateral (Calf Raises)',region:'tobillo',tipo:'Fortalecimiento',series:'3',reps:'20 reps',descanso:'45 seg',rpe:'RPE 12',instrucciones:'De pie con apoyo, eleva lentamente los talones hasta puntillas. Mantén 1 segundo. Baja muy lento (3 segundos).',precauciones:'Apoyo en pared al inicio. Bajar lento es clave.',evidencia:'A',dx:['tobillo']},
+  {id:'g01',nombre:'Respiración diafragmática sentado',region:'general',tipo:'Movilidad',series:'3',reps:'10 respiraciones',descanso:'30 seg',rpe:'RPE 6',instrucciones:'Mano en abdomen. Inhala por la nariz inflando el abdomen. Exhala lento por la boca. Ritmo tranquilo.',precauciones:'No hiperventilar.',evidencia:'A',dx:['ptr','ptc','lumbalgia','adulto_mayor']},
+  {id:'am01',nombre:'Marcha terapéutica con elevación de rodillas',region:'am',tipo:'Cardio/Marcha',series:'3',reps:'30 pasos',descanso:'60 seg',rpe:'RPE 11',instrucciones:'Camina levantando alternadamente las rodillas hasta la cadera. Balanceo natural de brazos.',precauciones:'Espacio libre. Calzado antideslizante.',evidencia:'A',dx:['adulto_mayor','fractura_cadera']},
+];
+
+// ════════════════════════════════════
+// DATA LAYER
+// ════════════════════════════════════
+const DB = {
+  get pacientes(){ return JSON.parse(localStorage.getItem('tf_pac')||'[]'); },
+  set pacientes(v){ localStorage.setItem('tf_pac',JSON.stringify(v)); },
+  get planes(){ return JSON.parse(localStorage.getItem('tf_planes')||'[]'); },
+  set planes(v){ localStorage.setItem('tf_planes',JSON.stringify(v)); },
+  get customEx(){ return JSON.parse(localStorage.getItem('tf_cex')||'[]'); },
+  set customEx(v){ localStorage.setItem('tf_cex',JSON.stringify(v)); },
+};
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+const AVC=['av-c1','av-c2','av-c3','av-c4','av-c5','av-c6'];
+function avC(n){ let h=0; for(let c of n) h+=c.charCodeAt(0); return AVC[h%AVC.length]; }
+function ini(n){ return n.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase(); }
+function tagH(pt){ const m={'DM2':'tag-dm','HTA':'tag-hta','Osteoporosis':'tag-ost','Deportista':'tag-dep','Neuropatía':'tag-neu'}; return `<span class="tag ${m[pt]||''}">${pt}</span>`; }
+
+// ════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════
+let CS='dashboard', CPI=null;
+const BCL={dashboard:'dashboard',pacientes:'pacientes',perfil:'pacientes/perfil',ia:'ia-clínica',biblioteca:'biblioteca/ejercicios'};
+
+function goTo(s, pid=null){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.s-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('screen-'+s).classList.add('active');
+  const sb=document.getElementById('sb-'+s);
+  if(sb) sb.classList.add('active');
+  document.getElementById('bc-cur').textContent=BCL[s]||s;
+  CS=s; if(pid) CPI=pid;
+  ({dashboard:renderDash,pacientes:renderPacs,biblioteca:renderLib,ia:setupIA}[s]||function(){})();
+  if(s==='perfil') renderPerfil(CPI);
+  try{document.getElementById('screen-'+s).scrollTop=0;}catch(e){}
+}
+
+// ════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════
+function renderDash(){
+  const ps=DB.pacientes;
+  document.getElementById('st-pac').textContent=ps.length;
+  document.getElementById('st-path').textContent=ps.filter(p=>(p.patologias||[]).length>0).length;
+  document.getElementById('st-ex').textContent=BIBLIOTECA.length+DB.customEx.length;
+  document.getElementById('st-pl').textContent=DB.planes.length;
+  document.getElementById('db-badge').textContent=ps.length;
+  document.getElementById('sb-info').textContent=ps.length+' pacientes';
+  document.getElementById('db-patients').innerHTML=ps.length?buildTable(ps.slice(0,5)):`<div class="empty-state"><div class="empty-ico">🏥</div><div class="empty-title">Sin pacientes</div><div class="empty-sub">Agrega tu primer paciente para comenzar</div><button class="btn btn-primary btn-sm" onclick="openModal('mPaciente')">+ Agregar</button></div>`;
+}
+
+function buildTable(list){
+  if(!list.length) return `<div class="empty-state"><div class="empty-ico">◈</div><div class="empty-title">Sin resultados</div></div>`;
+  return `<table class="pt-table"><thead><tr><th>Paciente</th><th>Diagnóstico</th><th>Patologías</th><th>Fase</th><th>Plan</th><th></th></tr></thead><tbody>${list.map(p=>{
+    const plan=DB.planes.find(pl=>pl.pacienteId===p.id);
+    return `<tr class="pt-row" onclick="goTo('perfil','${p.id}')">
+      <td><div class="pt-av-wrap"><div class="pt-av ${avC(p.nombre)}">${ini(p.nombre)}</div><div><div class="pt-name">${p.nombre}</div><div class="pt-meta">${p.edad||'—'}a · ${p.peso||'—'}kg</div></div></div></td>
+      <td style="font-size:11px;color:var(--cream-dim);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.diagnostico||'—'}</td>
+      <td><div class="tags-cell">${(p.patologias||[]).map(tagH).join('')||'<span style="font-size:10px;color:var(--olive-lit)">—</span>'}</div></td>
+      <td style="font-size:11px;color:var(--cream-dim)">F${p.fase||'—'}</td>
+      <td>${plan?`<span class="badge badge-ok">✓ Activo</span>`:`<span class="badge badge-info">Sin plan</span>`}</td>
+      <td><div style="display:flex;gap:3px">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();openIAp('${p.id}')" title="IA Plan">✦</button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();editPac('${p.id}')" title="Editar">✏</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();confirmDel('${p.id}','${p.nombre}')" title="Eliminar">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+function renderPacs(){
+  const ps=DB.pacientes;
+  document.getElementById('pac-badge').textContent=ps.length;
+  document.getElementById('pac-table').innerHTML=buildTable(ps);
+}
+
+function renderPerfil(id){
+  const p=DB.pacientes.find(x=>x.id===id);
+  if(!p){goTo('pacientes');return;}
+  CPI=id;
+  document.getElementById('perf-sub').textContent=`${p.nombre} · ${p.diagnostico||'—'}`;
+  const imc=p.peso&&p.talla?(p.peso/((p.talla/100)**2)).toFixed(1):'—';
+  const plan=DB.planes.find(pl=>pl.pacienteId===id);
+  const fN=parseInt(p.fase)||1;
+  const phr=[1,2,3,4,5].map(f=>`<div class="phase-step"><div class="ph-dot ${f<fN?'ph-done':f===fN?'ph-active':'ph-next'}">${f<fN?'✓':f}</div><div class="ph-lbl ${f===fN?'a':''}">${['Aguda','Subag','Fortlc','Funcl','Alta'][f-1]}</div></div>`).join('');
+  const alertas=buildAlertas(p.patologias||[]);
+  const notas=(p.notas||[]).slice().reverse().map(n=>`<div class="note-item"><div class="note-text">${n.texto}</div><div class="note-date">${n.fecha}</div></div>`).join('')||`<div style="font-size:11px;color:var(--olive-lit);padding:6px 0">Sin notas</div>`;
+  const planBlock=plan?`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:10px"><div style="font-size:13px;font-weight:600;color:var(--white);margin-bottom:3px">◩ ${plan.nombre}</div><div style="font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace">${plan.fecha} · ${plan.ejercicios.length} ejercicios · ${plan.frecuencia||'—'}</div></div><div style="display:flex;flex-direction:column;gap:6px">${plan.ejercicios.map((ex,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--panel);border:1px solid var(--border);border-radius:8px"><div style="width:48px;height:48px;flex-shrink:0;border-radius:6px;overflow:hidden;border:1px solid var(--border)">${getIllustration(ex.nombre,ex.region,ex.tipo)}</div><div><div style="font-size:12px;font-weight:500;color:var(--white)">${ex.nombre}</div><div style="font-size:10px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace">${ex.series||'—'} × ${ex.reps||'—'} · ${ex.rpe||''}</div></div></div>`).join('')}</div>`:`<div class="empty-state" style="padding:18px"><div class="empty-ico" style="font-size:26px">◩</div><div class="empty-title" style="font-size:13px">Sin plan</div><button class="btn btn-primary btn-sm" onclick="openIAp('${id}')">✦ Generar Plan IA</button></div>`;
+  document.getElementById('perf-content').innerHTML=`<div class="profile-layout"><div><div class="profile-card"><div class="pc-hdr"><div class="big-av">${ini(p.nombre)}</div><div class="pc-name">${p.nombre}</div><div class="pc-sub">expediente clínico</div><div style="margin:8px 0;background:#0C0D0A;border:1.5px solid #B2B49C;border-radius:8px;padding:7px 12px;text-align:center"><div style="font-size:9px;color:#8A8C78;font-family:'JetBrains Mono',monospace;margin-bottom:3px;letter-spacing:1px">CÓDIGO PACIENTE</div><div style="font-size:20px;font-weight:700;color:#B2B49C;font-family:'JetBrains Mono',monospace;letter-spacing:4px">${'PAC-'+p.id.slice(-4).toUpperCase()}</div></div></div><div class="pc-body"><div class="info-row"><span class="info-lbl">edad</span><span class="info-val">${p.edad||'—'} años</span></div><div class="info-row"><span class="info-lbl">peso</span><span class="info-val">${p.peso||'—'} kg</span></div><div class="info-row"><span class="info-lbl">estatura</span><span class="info-val">${p.talla||'—'} cm</span></div><div class="info-row"><span class="info-lbl">IMC</span><span class="info-val">${imc}</span></div><div class="info-row"><span class="info-lbl">diagnóstico</span><span class="info-val" style="font-size:11px">${p.diagnostico||'—'}</span></div>${p.medicamentos?`<div class="info-row"><span class="info-lbl">medicamentos</span><span class="info-val" style="font-size:10px">${p.medicamentos}</span></div>`:''}</div>${(p.patologias||[]).length?`<div class="pc-tags">${(p.patologias||[]).map(tagH).join('')}</div>`:''}<div class="pc-actions"><button class="btn-glow" style="font-size:12px;padding:9px" onclick="openIAp('${id}')">✦ Generar Plan IA</button><button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="editPac('${id}')">✏ Editar datos</button><button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="openModal('mNota')">+ Nota clínica</button></div></div></div><div style="display:flex;flex-direction:column;gap:12px">${alertas.length?`<div class="card"><div class="card-hdr"><span style="color:var(--danger)">◬</span><span class="card-title">Alertas clínicas</span><span class="badge badge-danger">${alertas.length}</span></div><div class="card-body">${alertas.join('')}</div></div>`:''}<div class="card"><div class="card-hdr"><span style="color:var(--sage)">◩</span><span class="card-title">Fase de rehabilitación</span></div><div class="card-body"><div class="phase-row">${phr}</div></div></div><div class="card"><div class="card-hdr"><span style="color:var(--sage)">◩</span><span class="card-title">Plan activo</span></div><div class="card-body">${planBlock}</div></div><div class="card"><div class="card-hdr"><span style="color:var(--sage)">📋</span><span class="card-title">Notas clínicas</span><button class="card-act" onclick="openModal('mNota')">+ nota</button></div><div class="card-body">${notas}</div></div></div></div>`;
+}
+
+function buildAlertas(pathos){
+  const a=[];
+  if(pathos.includes('HTA')) a.push(`<div class="abox danger"><div style="font-size:14px">🚫</div><div><div class="abox-title d">HTA — Restricciones activas</div><div class="abox-text">Sin isométricos >10 seg. Sin Valsalva. Suspender si PAS >180 mmHg. Monitorear PA pre/post-ejercicio.</div></div></div>`);
+  if(pathos.includes('DM2')) a.push(`<div class="abox warn"><div style="font-size:14px">⚡</div><div><div class="abox-title w">DM2 — Precauciones metabólicas</div><div class="abox-text">Glucemia 100-250 mg/dL antes de ejercitar. Sesiones post-comida preferibles. Revisar pies. Hidratación constante.</div></div></div>`);
+  if(pathos.includes('Osteoporosis')) a.push(`<div class="abox warn"><div style="font-size:14px">🦴</div><div><div class="abox-title w">Osteoporosis — Carga ósea controlada</div><div class="abox-text">Sin flexión lumbar cargada. Sin torsiones bruscas. Impacto controlado para estimulación ósea saludable.</div></div></div>`);
+  return a;
+}
+
+// ════════════════════════════════════
+// BIBLIOTECA
+// ════════════════════════════════════
+let filtroLib='';
+function filtrar(f){
+  filtroLib=f;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.toggle('active',t.dataset.f===f));
+  renderLib();
+}
+function renderLib(){
+  const all=[...BIBLIOTECA,...DB.customEx];
+  const exs=filtroLib?all.filter(e=>e.region===filtroLib):all;
+  document.getElementById('lib-count').textContent=all.length;
+  const g=document.getElementById('lib-grid');
+  if(!exs.length){g.innerHTML=`<div class="empty-state"><div class="empty-ico">🏋️</div><div class="empty-title">Sin ejercicios aquí</div><div class="empty-sub">Prueba otro filtro o agrega ejercicios</div></div>`;return;}
+  g.innerHTML=`<div class="ex-grid">${exs.map(e=>{
+    const illus=getIllustration(e.nombre,e.region,e.tipo);
+    const isCustom=!['r','h','c','ca','t','g','am','d'].some(p=>e.id.startsWith(p))||DB.customEx.find(x=>x.id===e.id);
+    return `<div class="ex-card" onclick="showExDetail('${e.id}')">
+      <div class="ex-img">${illus}<div class="ex-region-badge">${e.region}</div><div class="ex-ev-badge ev-${(e.evidencia||'b').toLowerCase()}">Evidencia ${e.evidencia||'B'}</div></div>
+      <div class="ex-body">
+        <div class="ex-name">${e.nombre}</div>
+        <div class="ex-region-lbl">${e.tipo||''}</div>
+        <div class="ex-doses">
+          ${e.series?`<span class="ex-dose">${e.series} series</span>`:''}
+          ${e.reps?`<span class="ex-dose">${e.reps}</span>`:''}
+          ${e.descanso?`<span class="ex-dose">${e.descanso}</span>`:''}
+          ${e.rpe?`<span class="ex-dose hl">${e.rpe}</span>`:''}
+        </div>
+        <div class="ex-desc">${(e.instrucciones||'Sin descripción').slice(0,90)}${(e.instrucciones||'').length>90?'...':''}</div>
+      </div>
+      <div class="ex-footer">
+        <span style="font-size:9px;color:var(--olive-lit);font-family:'JetBrains Mono',monospace">${isCustom?'personalizado':'base clínica'}</span>
+        ${isCustom?`<div style="margin-left:auto;display:flex;gap:3px"><button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();editEx('${e.id}')">✏</button><button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();delEx('${e.id}')">✕</button></div>`:'<div style="margin-left:auto"><span class="badge badge-info" style="font-size:8px">apta/acsm</span></div>'}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function showExDetail(id){
+  // Briefly highlight the card - just a visual cue
+  showToast('Toca ✏ para editar · Toca ✦ para generar plan con este ejercicio');
+}
+
+// ════════════════════════════════════
+// IA SETUP + GENERATION
+// ════════════════════════════════════
+function setupIA(){
+  const ps=DB.pacientes;
+  const sel=document.getElementById('ia-sel');
+  sel.innerHTML=`<option value="">— Manual —</option>`+ps.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+  if(CPI){sel.value=CPI;loadPatientIA();}
+}
+function openIAp(id){CPI=id;goTo('ia');}
+function openIAforPatient(){if(CPI)openIAp(CPI);}
+function loadPatientIA(){
+  const id=document.getElementById('ia-sel').value;
+  if(!id)return;
+  const p=DB.pacientes.find(x=>x.id===id);
+  if(!p)return;
+  if(p.edad) document.getElementById('ia-edad').value=p.edad;
+  if(p.peso) document.getElementById('ia-peso').value=p.peso;
+  if(p.talla) document.getElementById('ia-talla').value=p.talla;
+  if(p.fase) document.getElementById('ia-fase').value=p.fase;
+  if(p.actividad) document.getElementById('ia-act').value=p.actividad;
+  if(p.medicamentos) document.getElementById('ia-meds').value=p.medicamentos;
+  document.querySelectorAll('#ia-pathos input').forEach(cb=>{const s=(p.patologias||[]).includes(cb.value);cb.checked=s;cb.parentElement.classList.toggle('sel',s);});
+}
+
+async function generarPlan(){
+  const edad=document.getElementById('ia-edad').value;
+  const dx=document.getElementById('ia-dx').value;
+  if(!edad||!dx){showToast('Completa edad y diagnóstico','error');return;}
+  const btn=document.getElementById('ia-btn');
+  btn.disabled=true;
+  document.getElementById('ia-btn-txt').style.display='none';
+  document.getElementById('ia-spinner').style.display='flex';
+  document.getElementById('ia-result').innerHTML=`<div class="card"><div class="card-body" style="display:flex;align-items:center;gap:8px;padding:20px;font-size:12px;color:var(--sage);font-family:'JetBrains Mono',monospace">✦ <span>Analizando perfil y generando protocolo personalizado con ilustraciones</span><div class="ai-dots"><span>·</span><span>·</span><span>·</span></div></div></div>`;
+  const peso=document.getElementById('ia-peso').value;
+  const talla=document.getElementById('ia-talla').value;
+  const fase=document.getElementById('ia-fase').value;
+  const act=document.getElementById('ia-act').value;
+  const meds=document.getElementById('ia-meds').value;
+  const notas=document.getElementById('ia-notas').value;
+  const sexo=document.getElementById('ia-sexo').value;
+  const pathos=[...document.querySelectorAll('#ia-pathos input:checked')].map(i=>i.value);
+  const imc=peso&&talla?(parseFloat(peso)/((parseFloat(talla)/100)**2)).toFixed(1):'—';
+  const dxMap={ptr:'Post-op prótesis total de rodilla (PTR)',ptc:'Post-op prótesis total de cadera (PTC)',lca:'Reconstrucción LCA',menisco:'Reparación meniscal',manguito:'Reparación manguito rotador',hombro_adhesivo:'Hombro adhesivo / capsulitis retráctil',lumbalgia:'Lumbalgia crónica',hernia:'Hernia discal lumbar',cervicalgia:'Cervicalgia / cervicobraquialgia',deportivo_rodilla:'Lesión deportiva rodilla',deportivo_hombro:'Lesión deportiva hombro',adulto_mayor:'Programa adulto mayor equilibrio/marcha',fractura_cadera:'Post-fractura cadera',tobillo:'Esguince / inestabilidad tobillo'};
+  const prompt=`Eres fisioterapeuta experto basado en evidencia. Genera protocolo personalizado.
+
+PACIENTE: Edad ${edad}a, ${sexo}, ${peso||'—'}kg, ${talla||'—'}cm, IMC ${imc}
+DIAGNÓSTICO: ${dxMap[dx]||dx}
+FASE: ${fase} (${['Aguda 0-2sem','Subaguda 2-4sem','Fortalecimiento 4-8sem','Funcional 8-12sem','Retorno actividad'][parseInt(fase)-1]})
+ACTIVIDAD: ${act}
+COMORBILIDADES: ${pathos.length?pathos.join(', '):'Ninguna'}
+MEDICAMENTOS: ${meds||'No reportados'}
+NOTAS: ${notas||'Sin notas'}
+
+REGLAS SEGURIDAD:
+${pathos.includes('HTA')?'HTA: Sin isométricos >10seg, sin Valsalva, RPE máx 13, suspender PAS>180.':''}
+${pathos.includes('DM2')?'DM2: Glucemia 100-250 pre-ejercicio, sesiones post-comida.':''}
+${pathos.includes('Osteoporosis')?'Osteoporosis: Sin flexión lumbar cargada, sin torsiones bruscas.':''}
+${parseInt(edad)>=65?'Adulto mayor: Priorizar equilibrio, prevención caídas, RPE conservador.':''}
+
+RESPONDE SOLO JSON con esta estructura exacta:
+{"nombre_plan":"string","descripcion":"string","evidencia":"string cita guías APTA/ACSM/JOSPT","advertencia_clinica":"string o null","dosificacion_general":{"frecuencia":"string","duracion_semanas":4,"rpe_objetivo":"string","momento":"string"},"ejercicios":[{"numero":1,"nombre":"nombre específico del ejercicio","region":"rodilla/hombro/columna/cadera/tobillo/general/deportivo/am","tipo":"Fortalecimiento/Movilidad/Estiramiento/Propiocepción/Cardio-Marcha/Funcional","series":"string","repeticiones":"string","descanso":"string","rpe":"string","instrucciones":"2-3 oraciones claras para el paciente","razon_clinica":"por qué este ejercicio para este paciente","evidencia":"A/B/C","precauciones":"string o null"}],"restricciones_aplicadas":["string"],"notas_terapeuta":"string"}
+Genera 6-8 ejercicios apropiados. Sin texto adicional, solo JSON válido.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const raw=data.content?.map(i=>i.text||'').join('').trim().replace(/```json|```/g,'').trim();
+    const plan=JSON.parse(raw);
+    renderResult(plan);
+  }catch(err){
+    document.getElementById('ia-result').innerHTML=`<div class="card"><div class="card-body" style="text-align:center;padding:24px"><div style="font-size:28px;margin-bottom:10px">⚠</div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--danger);margin-bottom:6px">Error al conectar con la IA</div><div style="font-size:12px;color:var(--olive-lit)">Verifica tu conexión y vuelve a intentarlo.</div></div></div>`;
+  }
+  btn.disabled=false;
+  document.getElementById('ia-btn-txt').style.display='';
+  document.getElementById('ia-spinner').style.display='none';
+}
+
+function renderResult(plan){
+  const d=plan.dosificacion_general||{};
+  const exHTML=plan.ejercicios.map((ex,i)=>{
+    const illus=getIllustration(ex.nombre,ex.region,ex.tipo);
+    return `<div class="plan-ex-card">
+      <div class="pec-illus">${illus}<div class="pec-num-badge">${ex.numero||i+1}</div></div>
+      <div class="pec-main">
+        <div class="pec-name">${ex.nombre}</div>
+        <div class="pec-region">${ex.region||''} · ${ex.tipo||''}</div>
+        <div class="pec-doses">
+          <span class="pec-dose">${ex.series||'—'} series</span>
+          <span class="pec-dose">${ex.repeticiones||'—'}</span>
+          <span class="pec-dose">${ex.descanso||'—'}</span>
+          <span class="pec-dose hl">${ex.rpe||'—'}</span>
+        </div>
+        <div class="pec-instruc">📋 ${ex.instrucciones||''}</div>
+        ${ex.razon_clinica?`<div class="pec-razon">✦ ${ex.razon_clinica}</div>`:''}
+        ${ex.precauciones?`<div class="pec-warn">⚠ ${ex.precauciones}</div>`:''}
+      </div>
+      <div class="pec-right"><span class="badge ev-${(ex.evidencia||'b').toLowerCase()}">Evidencia ${ex.evidencia||'B'}</span></div>
+    </div>`;
+  }).join('');
+  document.getElementById('ia-result').innerHTML=`<div class="plan-result">
+    <div class="plan-hdr-box">
+      <div class="plan-hdr-name">✦ ${plan.nombre_plan}</div>
+      <div class="plan-hdr-sub">generado por ia clínica tufisio · ${new Date().toLocaleDateString('es-MX')}</div>
+      <div class="plan-pills">
+        <span class="plan-pill">📅 ${d.duracion_semanas||4} semanas</span>
+        <span class="plan-pill">🏋️ ${plan.ejercicios.length} ejercicios</span>
+        <span class="plan-pill">📆 ${d.frecuencia||'—'}</span>
+        <span class="plan-pill">💪 ${d.rpe_objetivo||'—'}</span>
+        ${d.momento?`<span class="plan-pill">🕐 ${d.momento}</span>`:''}
+      </div>
+    </div>
+    <div class="ev-band"><span style="font-size:15px">📚</span><div class="ev-text"><strong>Evidencia:</strong> ${plan.evidencia||'APTA, ACSM, WCPT'}</div></div>
+    ${plan.advertencia_clinica?`<div class="warn-band"><span style="font-size:14px">⚠️</span><div class="wb-text"><strong>Atención clínica:</strong> ${plan.advertencia_clinica}</div></div>`:''}
+    ${(plan.restricciones_aplicadas||[]).length?`<div class="restrict-alert"><span style="font-size:14px">🛡️</span><div class="restrict-text"><strong>Restricciones aplicadas:</strong> ${plan.restricciones_aplicadas.join(' · ')}</div></div>`:''}
+    <div style="display:flex;flex-direction:column;gap:8px">${exHTML}</div>
+    ${plan.notas_terapeuta?`<div class="card"><div class="card-hdr"><span>📝</span><span class="card-title">Notas para el terapeuta</span></div><div class="card-body" style="font-size:12px;color:var(--cream-dim);line-height:1.7">${plan.notas_terapeuta}</div></div>`:''}
+    <div class="card" style="border:2px solid rgba(178,180,156,0.2)">
+      <div class="card-hdr"><span style="color:var(--sage)">✓</span><span class="card-title">Aprobar plan</span></div>
+      <div class="card-body">
+        <div style="font-size:12px;color:var(--cream-dim);margin-bottom:12px">Revisa los ejercicios. Al aprobar, el plan queda guardado en el expediente del paciente con sus ilustraciones.</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="generarPlan()">🔄 Regenerar</button>
+          <button class="btn btn-primary" onclick='guardarPlan(${JSON.stringify(plan).replace(/'/g,"&#39;")})'>✅ Aprobar y Guardar Plan</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function guardarPlan(plan){
+  const pid=document.getElementById('ia-sel').value;
+  if(!pid){showToast('Selecciona un paciente primero','error');return;}
+  const planes=DB.planes;
+  const idx=planes.findIndex(pl=>pl.pacienteId===pid);
+  const d=plan.dosificacion_general||{};
+  const entry={id:uid(),pacienteId:pid,nombre:plan.nombre_plan,frecuencia:d.frecuencia||'—',duracion:(d.duracion_semanas||4)+' semanas',fecha:new Date().toLocaleDateString('es-MX'),generadoIA:true,ejercicios:plan.ejercicios.map(ex=>({nombre:ex.nombre,region:ex.region||'general',tipo:ex.tipo||'',series:ex.series,reps:ex.repeticiones,rpe:ex.rpe,instrucciones:ex.instrucciones,evidencia:ex.evidencia}))};
+  if(idx>-1) planes.splice(idx,1,entry); else planes.push(entry);
+  DB.planes=planes;
+  showToast('✅ Plan guardado con ilustraciones');
+  setTimeout(()=>goTo('perfil',pid),900);
+}
+
+// ════════════════════════════════════
+// CRUD PACIENTES
+// ════════════════════════════════════
+function guardarPaciente(){
+  const nombre=document.getElementById('p-nombre').value.trim();
+  const edad=document.getElementById('p-edad').value;
+  if(!nombre){showToast('El nombre es obligatorio','error');return;}
+  if(!edad){showToast('La edad es obligatoria','error');return;}
+  const pathos=[...document.querySelectorAll('#p-pathos input:checked')].map(i=>i.value);
+  const id=document.getElementById('p-id').value||uid();
+  const p={id,nombre,edad:parseInt(edad),peso:parseFloat(document.getElementById('p-peso').value)||null,talla:parseFloat(document.getElementById('p-talla').value)||null,telefono:document.getElementById('p-tel').value.trim(),diagnostico:document.getElementById('p-dx').value.trim(),fase:document.getElementById('p-fase').value,actividad:document.getElementById('p-act').value,patologias:pathos,medicamentos:document.getElementById('p-meds').value.trim(),contraindicaciones:document.getElementById('p-contra').value.trim(),notas:[]};
+  const ps=DB.pacientes;
+  const idx=ps.findIndex(x=>x.id===id);
+  if(idx>-1){p.notas=ps[idx].notas||[];ps.splice(idx,1,p);}else ps.push(p);
+  DB.pacientes=ps;
+  closeModal('mPaciente');
+  showToast(idx>-1?'✅ Paciente actualizado':'✅ Paciente registrado');
+  if(idx>-1&&CPI===id)renderPerfil(id);
+  renderDash();
+}
+
+function editPac(id){
+  const p=DB.pacientes.find(x=>x.id===id);
+  if(!p)return;
+  document.getElementById('mp-title').textContent='✏ Editar Paciente';
+  document.getElementById('p-id').value=p.id;
+  ['p-nombre','p-edad','p-peso','p-talla','p-tel','p-dx','p-meds','p-contra','p-notas'].forEach(f=>{try{document.getElementById(f).value=p[f.replace('p-','')]||'';}catch(e){}});
+  document.getElementById('p-nombre').value=p.nombre;
+  document.getElementById('p-edad').value=p.edad||'';
+  document.getElementById('p-peso').value=p.peso||'';
+  document.getElementById('p-talla').value=p.talla||'';
+  document.getElementById('p-tel').value=p.telefono||'';
+  document.getElementById('p-dx').value=p.diagnostico||'';
+  document.getElementById('p-fase').value=p.fase||'3';
+  document.getElementById('p-act').value=p.actividad||'Moderado';
+  document.getElementById('p-meds').value=p.medicamentos||'';
+  document.getElementById('p-contra').value=p.contraindicaciones||'';
+  document.querySelectorAll('#p-pathos input').forEach(cb=>{cb.checked=(p.patologias||[]).includes(cb.value);cb.parentElement.classList.toggle('sel',cb.checked);});
+  openModal('mPaciente');
+}
+function editarPacienteActual(){if(CPI)editPac(CPI);}
+function delPac(id){
+  DB.pacientes=DB.pacientes.filter(x=>x.id!==id);
+  DB.planes=DB.planes.filter(pl=>pl.pacienteId!==id);
+  showToast('Paciente eliminado');
+  if(CS==='perfil')goTo('pacientes');else renderPacs();
+  renderDash();
+}
+
+// CRUD EJERCICIOS
+function guardarEjercicio(){
+  const nombre=document.getElementById('e-nombre').value.trim();
+  if(!nombre){showToast('Nombre obligatorio','error');return;}
+  const id=document.getElementById('e-id').value||uid();
+  const ex={id,nombre,region:document.getElementById('e-region').value,tipo:document.getElementById('e-tipo').value,series:document.getElementById('e-series').value,reps:document.getElementById('e-reps').value,descanso:document.getElementById('e-descanso').value,rpe:document.getElementById('e-rpe').value,instrucciones:document.getElementById('e-instruc').value,precauciones:document.getElementById('e-prec').value,evidencia:document.getElementById('e-evidencia').value};
+  const exs=DB.customEx;
+  const idx=exs.findIndex(x=>x.id===id);
+  if(idx>-1)exs.splice(idx,1,ex);else exs.push(ex);
+  DB.customEx=exs;
+  closeModal('mEjercicio');
+  showToast(idx>-1?'✅ Ejercicio actualizado':'✅ Ejercicio agregado');
+  renderLib();
+}
+function editEx(id){
+  const ex=DB.customEx.find(x=>x.id===id);
+  if(!ex)return;
+  document.getElementById('me-title').textContent='✏ Editar Ejercicio';
+  document.getElementById('e-id').value=ex.id;
+  document.getElementById('e-nombre').value=ex.nombre;
+  document.getElementById('e-region').value=ex.region||'rodilla';
+  document.getElementById('e-tipo').value=ex.tipo||'Fortalecimiento';
+  document.getElementById('e-series').value=ex.series||'';
+  document.getElementById('e-reps').value=ex.reps||'';
+  document.getElementById('e-descanso').value=ex.descanso||'';
+  document.getElementById('e-rpe').value=ex.rpe||'';
+  document.getElementById('e-instruc').value=ex.instrucciones||'';
+  document.getElementById('e-prec').value=ex.precauciones||'';
+  document.getElementById('e-evidencia').value=ex.evidencia||'B';
+  openModal('mEjercicio');
+}
+function delEx(id){DB.customEx=DB.customEx.filter(x=>x.id!==id);showToast('Eliminado');renderLib();}
+
+// NOTAS
+function guardarNota(){
+  const txt=document.getElementById('nota-txt').value.trim();
+  if(!txt){showToast('Escribe una nota','error');return;}
+  if(!CPI)return;
+  const ps=DB.pacientes;
+  const idx=ps.findIndex(p=>p.id===CPI);
+  if(idx<0)return;
+  ps[idx].notas=ps[idx].notas||[];
+  ps[idx].notas.push({texto:txt,fecha:new Date().toLocaleDateString('es-MX')});
+  DB.pacientes=ps;
+  closeModal('mNota');
+  document.getElementById('nota-txt').value='';
+  showToast('✅ Nota guardada');
+  renderPerfil(CPI);
+}
+
+// MODALS
+function openModal(id){
+  if(id==='mPaciente'&&!document.getElementById('p-id').value){
+    document.getElementById('mp-title').textContent='+ Nuevo Paciente';
+    ['p-nombre','p-edad','p-peso','p-talla','p-tel','p-dx','p-meds','p-contra','p-notas'].forEach(f=>{try{document.getElementById(f).value='';}catch(e){}});
+    document.getElementById('p-fase').value='3';document.getElementById('p-act').value='Moderado';
+    document.querySelectorAll('#p-pathos input').forEach(cb=>{cb.checked=false;cb.parentElement.classList.remove('sel');});
+  }
+  if(id==='mEjercicio'&&!document.getElementById('e-id').value){
+    document.getElementById('me-title').textContent='+ Nuevo Ejercicio';
+    document.getElementById('e-id').value='';
+    ['e-nombre','e-series','e-reps','e-descanso','e-rpe','e-instruc','e-prec'].forEach(f=>{try{document.getElementById(f).value='';}catch(e){}});
+  }
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';if(id==='mPaciente')document.getElementById('p-id').value='';if(id==='mEjercicio')document.getElementById('e-id').value='';}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
+
+function confirmDel(id,name){
+  document.getElementById('cf-title').textContent='¿Eliminar paciente?';
+  document.getElementById('cf-text').textContent=`"${name}" y su plan serán eliminados permanentemente.`;
+  document.getElementById('cf-ok').onclick=()=>{delPac(id);closeConfirm();};
+  document.getElementById('confirmDlg').classList.add('open');
+}
+function closeConfirm(){document.getElementById('confirmDlg').classList.remove('open');}
+
+// SEARCH
+function handleSearch(q){
+  if(!q.trim())return;
+  const ps=DB.pacientes.filter(p=>p.nombre.toLowerCase().includes(q.toLowerCase())||(p.diagnostico||'').toLowerCase().includes(q.toLowerCase()));
+  if(CS!=='pacientes')goTo('pacientes');
+  document.getElementById('pac-badge').textContent=ps.length;
+  document.getElementById('pac-table').innerHTML=buildTable(ps);
+}
+
+// EXPORT
+function exportData(){
+  const d={pacientes:DB.pacientes,planes:DB.planes,ejercicios:DB.customEx,exportado:new Date().toISOString()};
+  const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`tufisio_backup_${Date.now()}.json`;a.click();
+  showToast('✅ Datos exportados');
+}
+
+// TOAST
+let tt;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast'+(type?' '+type:'');
+  t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// INIT
+document.getElementById('fecha-hoy').textContent=new Date().toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+renderDash();
+renderLib();
+</script>
+
+<!-- EXERCISE SVG TEMPLATES (hidden) -->
+<div style="display:none" id="svg-templates">
+  <div id="tpl-ext_rodilla"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="45" y="62" width="10" height="86" rx="4" fill="#2A2B26"/>
+<rect x="45" y="145" width="120" height="10" rx="3" fill="#2A2B26"/>
+<line x1="57" y1="155" x2="57" y2="183" stroke="#2A2B26" stroke-width="6" stroke-linecap="round"/>
+<line x1="155" y1="155" x2="155" y2="183" stroke="#2A2B26" stroke-width="6" stroke-linecap="round"/>
+<ellipse cx="105" cy="72" rx="17" ry="16" fill="#C8A882"/>
+<rect x="90" y="88" width="30" height="55" rx="7" fill="#A8886A"/>
+<line x1="90" y1="102" x2="62" y2="108" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<line x1="120" y1="102" x2="148" y2="108" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<rect x="72" y="136" width="50" height="16" rx="7" fill="#9A7855"/>
+<rect x="122" y="133" width="85" height="16" rx="7" fill="#B2B49C" opacity="0.95"/>
+<ellipse cx="210" cy="141" rx="15" ry="9" fill="#9A7855"/>
+<ellipse cx="168" cy="141" rx="40" ry="9" fill="#B2B49C" opacity="0.3"/>
+<path d="M122 141 A52 52 0 0 1 168 108" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+<text x="165" y="105" fill="#B09040" font-size="14" font-family="monospace" font-weight="bold">60°</text>
+<path d="M250 105 L258 88 L266 105" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="258" y1="72" x2="258" y2="105" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Extensión rodilla 0–60°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-sentadilla"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="118" y="112" width="84" height="8" rx="2" fill="#2A2B26" opacity="0.6"/>
+<line x1="126" y1="120" x2="126" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="194" y1="120" x2="194" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="160" cy="32" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="48" width="28" height="46" rx="7" fill="#A8886A"/>
+<line x1="146" y1="62" x2="112" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="62" x2="208" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 94 Q132 118 124 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<path d="M170 94 Q188 118 196 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<ellipse cx="160" cy="94" rx="25" ry="14" fill="#B2B49C" opacity="0.25"/>
+<line x1="124" y1="140" x2="120" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="196" y1="140" x2="200" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<path d="M258 72 L266 88 L274 72" stroke="#B09040" stroke-width="3" fill="none" stroke-linecap="round"/>
+<line x1="266" y1="57" x2="266" y2="88" stroke="#B09040" stroke-width="3" stroke-linecap="round" stroke-dasharray="5,3"/>
+<text x="274" y="82" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">45°</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Sentadilla asistida 0–45°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-puente"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="15" y="170" width="290" height="8" rx="3" fill="#1A1B16"/>
+<ellipse cx="52" cy="138" rx="20" ry="17" fill="#C8A882"/>
+<path d="M70 132 Q105 108 155 106 Q195 108 218 130" stroke="#A8886A" stroke-width="16" stroke-linecap="round" fill="none"/>
+<ellipse cx="155" cy="108" rx="38" ry="20" fill="#B2B49C" opacity="0.9"/>
+<ellipse cx="155" cy="108" rx="38" ry="20" fill="#B2B49C" opacity="0.2"/>
+<line x1="180" y1="120" x2="198" y2="148" stroke="#9A7855" stroke-width="10" stroke-linecap="round"/>
+<line x1="130" y1="120" x2="114" y2="148" stroke="#9A7855" stroke-width="10" stroke-linecap="round"/>
+<ellipse cx="198" cy="158" rx="22" ry="9" fill="#9A7855"/>
+<ellipse cx="114" cy="158" rx="22" ry="9" fill="#9A7855"/>
+<line x1="70" y1="118" x2="222" y2="118" stroke="#B09040" stroke-width="1.5" stroke-dasharray="7,4" opacity="0.7"/>
+<text x="226" y="122" fill="#B09040" font-size="9" font-family="monospace">neutral</text>
+<path d="M256 98 L264 80 L272 98" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="264" y1="64" x2="264" y2="98" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GLÚTEOS · ISQUIOTIBIALES</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Puente glúteos supino</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-marcha_lateral"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<path d="M78 178 Q160 185 242 178" stroke="#B09040" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+<text x="130" y="196" fill="#B09040" font-size="10" font-family="monospace" font-weight="bold">BANDA ELÁSTICA</text>
+<ellipse cx="88" cy="38" rx="16" ry="15" fill="#C8A882"/>
+<rect x="74" y="53" width="28" height="42" rx="6" fill="#A8886A"/>
+<line x1="74" y1="65" x2="50" y2="74" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<line x1="102" y1="65" x2="114" y2="74" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<path d="M83 95 Q74 130 70 178" stroke="#9A7855" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M93 95 Q103 130 108 178" stroke="#B2B49C" stroke-width="8" stroke-linecap="round" fill="none"/>
+<ellipse cx="85" cy="96" rx="18" ry="12" fill="#B2B49C" opacity="0.3"/>
+<path d="M135 92 L155 92" stroke="#6A9E6C" stroke-width="5" stroke-linecap="round"/>
+<path d="M148 85 L157 92 L148 99" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="232" cy="38" rx="16" ry="15" fill="#C8A882"/>
+<rect x="218" y="53" width="28" height="42" rx="6" fill="#A8886A"/>
+<line x1="218" y1="65" x2="200" y2="74" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<line x1="246" y1="65" x2="264" y2="74" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<path d="M226 95 Q217 130 212 178" stroke="#9A7855" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M238 95 Q248 130 252 178" stroke="#B2B49C" stroke-width="8" stroke-linecap="round" fill="none"/>
+<ellipse cx="230" cy="96" rx="18" ry="12" fill="#B2B49C" opacity="0.3"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GLÚTEO MEDIO · ABDUCTORES</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Marcha lateral con banda</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-equilibrio"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="258" y="40" width="10" height="143" rx="4" fill="#2A2B26" opacity="0.5"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="44" rx="7" fill="#A8886A"/>
+<line x1="146" y1="58" x2="112" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="58" x2="208" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M155 88 Q150 128 148 183" stroke="#B2B49C" stroke-width="10" stroke-linecap="round" fill="none"/>
+<path d="M165 88 Q172 105 178 115" stroke="#9A7855" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M178 115 Q180 135 176 150" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<ellipse cx="148" cy="183" rx="22" ry="6" fill="#9A7855"/>
+<circle cx="160" cy="88" r="22" fill="#B2B49C" opacity="0.12"/>
+<circle cx="264" cy="35" r="22" fill="none" stroke="#2A2B26" stroke-width="1.5"/>
+<text x="252" y="33" fill="#6A9E6C" font-size="11" font-family="monospace">30</text>
+<text x="255" y="46" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">PROPIOCEPCIÓN · TOBILLO</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Equilibrio monopodal</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-calf_raises"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<ellipse cx="155" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="141" y="44" width="28" height="44" rx="7" fill="#A8886A"/>
+<line x1="141" y1="58" x2="110" y2="66" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="169" y1="58" x2="196" y2="66" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 88 Q143 128 138 165" stroke="#9A7855" stroke-width="9" stroke-linecap="round" fill="none"/>
+<path d="M160 88 Q167 128 172 165" stroke="#9A7855" stroke-width="9" stroke-linecap="round" fill="none"/>
+<ellipse cx="138" cy="168" rx="20" ry="8" fill="#B2B49C" opacity="0.8"/>
+<ellipse cx="172" cy="168" rx="20" ry="8" fill="#B2B49C" opacity="0.8"/>
+<ellipse cx="155" cy="160" rx="28" ry="14" fill="#B2B49C" opacity="0.25"/>
+<text x="88" y="162" fill="#B2B49C" font-size="9" font-family="monospace">PUNTILLAS</text>
+<path d="M238" y=""/>
+<path d="M236 90 L244 73 L252 90" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="244" y1="57" x2="244" y2="90" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<text x="222" y="108" fill="#5C5E55" font-size="9" font-family="monospace">bajar 3s</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GASTROCNEMIO · SÓLEO</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Elevación talones bilateral</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-respiracion"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<ellipse cx="160" cy="50" rx="18" ry="17" fill="#C8A882"/>
+<rect x="146" y="67" width="28" height="50" rx="7" fill="#A8886A"/>
+<line x1="148" y1="78" x2="118" y2="86" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="78" x2="204" y2="86" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<rect x="136" y="115" width="48" height="40" rx="8" fill="#2A2B26" opacity="0.4"/>
+<line x1="148" y1="115" x2="144" y2="158" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="172" y1="115" x2="176" y2="158" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<ellipse cx="160" cy="90" rx="24" ry="18" fill="#B2B49C" opacity="0.55"/>
+<ellipse cx="160" cy="106" rx="18" ry="10" fill="#B09040" opacity="0.35"/>
+<text x="82" y="84" fill="#6A9E6C" font-size="10" font-family="monospace">inhala</text>
+<text x="196" y="84" fill="#B09040" font-size="10" font-family="monospace">exhala</text>
+<path d="M118 70 Q106 90 118 110" stroke="#6A9E6C" stroke-width="2.5" fill="none" stroke-dasharray="4,2"/>
+<path d="M202 70 Q214 90 202 110" stroke="#B09040" stroke-width="2.5" fill="none" stroke-dasharray="4,2"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">DIAFRAGMA · RELAJACIÓN</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Respiración diafragmática</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-abduccion"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="10" y="150" width="300" height="8" rx="3" fill="#1A1B16"/>
+<ellipse cx="38" cy="125" rx="20" ry="17" fill="#C8A882"/>
+<rect x="52" y="115" width="90" height="20" rx="8" fill="#A8886A"/>
+<line x1="52" y1="122" x2="30" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="52" y1="128" x2="30" y2="150" stroke="#9A7855" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+<path d="M142 118 Q175 105 205 98" stroke="#B2B49C" stroke-width="11" stroke-linecap="round" fill="none"/>
+<ellipse cx="208" cy="97" rx="15" ry="9" fill="#9A7855"/>
+<ellipse cx="175" cy="108" rx="32" ry="10" fill="#B2B49C" opacity="0.3"/>
+<line x1="142" y1="125" x2="155" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<path d="M142 118 A42 42 0 0 1 155 150" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+<text x="162" y="135" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">40°</text>
+<path d="M240 82 L248 65 L256 82" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="248" y1="50" x2="248" y2="82" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GLÚTEO MEDIO · CADERA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Abducción lateral decúbito</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-cat_cow"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="0" y="178" width="320" height="22" fill="#1A1B16"/>
+<text x="20" y="192" fill="#B09040" font-size="10" font-family="monospace" font-weight="bold">CAT ↑</text>
+<ellipse cx="22" cy="108" rx="14" ry="12" fill="#C8A882"/>
+<ellipse cx="28" cy="118" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="28" cy="152" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="98" cy="118" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="98" cy="152" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<path d="M28 118 Q48 90 63 85 Q78 90 98 118" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<path d="M98 118 Q106 126 104 138" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<path d="M56 65 L62 68 L68 62" stroke="#6A9E6C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<text x="155" y="192" fill="#9EA882" font-size="10" font-family="monospace" font-weight="bold">COW ↓</text>
+<ellipse cx="162" cy="108" rx="14" ry="12" fill="#C8A882"/>
+<ellipse cx="168" cy="118" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="168" cy="152" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="238" cy="118" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="238" cy="152" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<path d="M168 118 Q188 132 203 138 Q218 132 238 118" stroke="#9A7855" stroke-width="11" stroke-linecap="round" fill="none" opacity="0.7"/>
+<path d="M238 118 Q246 108 244 96" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">COLUMNA · MOVILIDAD FLEXOEXT.</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Cat-Cow en cuadrupedia</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-bird_dog"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="0" y="178" width="320" height="22" fill="#1A1B16"/>
+<ellipse cx="40" cy="95" rx="13" ry="12" fill="#C8A882"/>
+<ellipse cx="45" cy="108" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="45" cy="142" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="125" cy="108" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<rect x="45" y="99" width="80" height="20" rx="8" fill="#B2B49C" opacity="0.85"/>
+<path d="M45 103 Q25 88 14 80" stroke="#6A9E6C" stroke-width="9" stroke-linecap="round" fill="none"/>
+<ellipse cx="11" cy="78" rx="9" ry="6" fill="#9A7855"/>
+<line x1="125" y1="108" x2="128" y2="140" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="128" cy="142" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<path d="M125 100 Q162 86 198 80" stroke="#6A9E6C" stroke-width="9" stroke-linecap="round" fill="none"/>
+<ellipse cx="202" cy="78" rx="12" ry="7" fill="#9A7855"/>
+<line x1="45" y1="108" x2="125" y2="108" stroke="#B09040" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>
+<text x="58" y="103" fill="#B09040" font-size="9" font-family="monospace">columna neutral</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CORE · GLÚTEOS · ESTABILIDAD</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Bird-Dog</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-plancha"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="15" y="170" width="290" height="8" rx="3" fill="#1A1B16"/>
+<rect x="28" y="152" width="32" height="10" rx="3" fill="#9A7855"/>
+<ellipse cx="22" cy="142" rx="15" ry="13" fill="#C8A882"/>
+<rect x="56" y="140" width="100" height="20" rx="8" fill="#B2B49C" opacity="0.9"/>
+<ellipse cx="200" cy="148" rx="12" ry="12" fill="#C8A882" opacity="0.8"/>
+<ellipse cx="220" cy="148" rx="12" ry="12" fill="#C8A882" opacity="0.8"/>
+<line x1="200" y1="158" x2="196" y2="170" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="220" y1="158" x2="224" y2="170" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="158" cy="146" rx="50" ry="11" fill="#B2B49C" opacity="0.2"/>
+<line x1="22" y1="144" x2="213" y2="144" stroke="#B09040" stroke-width="1.5" stroke-dasharray="7,4" opacity="0.7"/>
+<text x="68" y="136" fill="#B09040" font-size="9" font-family="monospace">línea recta</text>
+<circle cx="278" cy="42" r="22" fill="none" stroke="#2A2B26" stroke-width="2"/>
+<text x="266" y="40" fill="#6A9E6C" font-size="12" font-family="monospace" font-weight="bold">30</text>
+<text x="270" y="54" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CORE · ABDOMINALES</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Plancha en rodillas</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-zancada"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="34" rx="7" fill="#A8886A"/>
+<line x1="146" y1="56" x2="118" y2="63" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="56" x2="202" y2="63" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M152 78 Q138 108 130 135" stroke="#B2B49C" stroke-width="11" stroke-linecap="round" fill="none"/>
+<path d="M130 135 Q128 158 126 183" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<path d="M168 78 Q180 100 188 118" stroke="#9A7855" stroke-width="9" stroke-linecap="round" fill="none"/>
+<path d="M188 118 Q190 150 187 183" stroke="#9A7855" stroke-width="6" stroke-linecap="round" fill="none"/>
+<ellipse cx="152" cy="78" rx="22" ry="14" fill="#B2B49C" opacity="0.3"/>
+<circle cx="188" cy="118" r="9" fill="none" stroke="#B09040" stroke-width="2" stroke-dasharray="3,2"/>
+<text x="196" y="122" fill="#B09040" font-size="9" font-family="monospace">~suelo</text>
+<path d="M252 62 L260 46 L268 62" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="260" y1="30" x2="260" y2="62" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Zancada / Lunge</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-pendulo"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="68" y="58" width="184" height="10" rx="4" fill="#2A2B26"/>
+<line x1="98" y1="68" x2="98" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="234" y1="68" x2="234" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="166" cy="94" rx="18" ry="16" fill="#C8A882"/>
+<rect x="152" y="110" width="28" height="48" rx="7" fill="#A8886A"/>
+<line x1="152" y1="124" x2="122" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="180" y1="124" x2="205" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="154" y1="158" x2="148" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="176" y1="158" x2="182" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="122" y1="132" x2="116" y2="162" stroke="#B2B49C" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="115" cy="169" rx="13" ry="8" fill="#9A7855"/>
+<ellipse cx="116" cy="162" rx="20" ry="20" fill="none" stroke="#B2B49C" stroke-width="2" stroke-dasharray="5,3"/>
+<path d="M98 162 Q116 144 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<path d="M98 162 Q116 180 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<text x="90" y="140" fill="#B09040" font-size="9" font-family="monospace">círculos</text>
+<text x="88" y="153" fill="#5C5E55" font-size="9" font-family="monospace">pasivo</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">HOMBRO · MOVILIDAD PASIVA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Péndulo Codman</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-elevacion_pierna"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="10" y="150" width="300" height="8" rx="3" fill="#1A1B16"/>
+<ellipse cx="38" cy="125" rx="20" ry="17" fill="#C8A882"/>
+<rect x="52" y="115" width="90" height="20" rx="8" fill="#A8886A"/>
+<line x1="52" y1="122" x2="30" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="52" y1="128" x2="30" y2="150" stroke="#9A7855" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+<path d="M142 118 Q175 105 205 98" stroke="#B2B49C" stroke-width="11" stroke-linecap="round" fill="none"/>
+<ellipse cx="208" cy="97" rx="15" ry="9" fill="#9A7855"/>
+<ellipse cx="175" cy="108" rx="32" ry="10" fill="#B2B49C" opacity="0.3"/>
+<line x1="142" y1="125" x2="155" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<path d="M142 118 A42 42 0 0 1 155 150" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+<text x="162" y="135" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">40°</text>
+<path d="M240 82 L248 65 L256 82" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="248" y1="50" x2="248" y2="82" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GLÚTEO MEDIO · CADERA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Abducción lateral decúbito</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-isquiotibiales"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="45" y="62" width="10" height="86" rx="4" fill="#2A2B26"/>
+<rect x="45" y="145" width="120" height="10" rx="3" fill="#2A2B26"/>
+<line x1="57" y1="155" x2="57" y2="183" stroke="#2A2B26" stroke-width="6" stroke-linecap="round"/>
+<line x1="155" y1="155" x2="155" y2="183" stroke="#2A2B26" stroke-width="6" stroke-linecap="round"/>
+<ellipse cx="105" cy="72" rx="17" ry="16" fill="#C8A882"/>
+<rect x="90" y="88" width="30" height="55" rx="7" fill="#A8886A"/>
+<line x1="90" y1="102" x2="62" y2="108" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<line x1="120" y1="102" x2="148" y2="108" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<rect x="72" y="136" width="50" height="16" rx="7" fill="#9A7855"/>
+<rect x="122" y="133" width="85" height="16" rx="7" fill="#B2B49C" opacity="0.95"/>
+<ellipse cx="210" cy="141" rx="15" ry="9" fill="#9A7855"/>
+<ellipse cx="168" cy="141" rx="40" ry="9" fill="#B2B49C" opacity="0.3"/>
+<path d="M122 141 A52 52 0 0 1 168 108" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+<text x="165" y="105" fill="#B09040" font-size="14" font-family="monospace" font-weight="bold">60°</text>
+<path d="M250 105 L258 88 L266 105" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="258" y1="72" x2="258" y2="105" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Extensión rodilla 0–60°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-prensa"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="118" y="112" width="84" height="8" rx="2" fill="#2A2B26" opacity="0.6"/>
+<line x1="126" y1="120" x2="126" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="194" y1="120" x2="194" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="160" cy="32" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="48" width="28" height="46" rx="7" fill="#A8886A"/>
+<line x1="146" y1="62" x2="112" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="62" x2="208" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 94 Q132 118 124 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<path d="M170 94 Q188 118 196 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<ellipse cx="160" cy="94" rx="25" ry="14" fill="#B2B49C" opacity="0.25"/>
+<line x1="124" y1="140" x2="120" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="196" y1="140" x2="200" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<path d="M258 72 L266 88 L274 72" stroke="#B09040" stroke-width="3" fill="none" stroke-linecap="round"/>
+<line x1="266" y1="57" x2="266" y2="88" stroke="#B09040" stroke-width="3" stroke-linecap="round" stroke-dasharray="5,3"/>
+<text x="274" y="82" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">45°</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Sentadilla asistida 0–45°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-step_up"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="118" y="112" width="84" height="8" rx="2" fill="#2A2B26" opacity="0.6"/>
+<line x1="126" y1="120" x2="126" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="194" y1="120" x2="194" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="160" cy="32" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="48" width="28" height="46" rx="7" fill="#A8886A"/>
+<line x1="146" y1="62" x2="112" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="62" x2="208" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 94 Q132 118 124 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<path d="M170 94 Q188 118 196 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<ellipse cx="160" cy="94" rx="25" ry="14" fill="#B2B49C" opacity="0.25"/>
+<line x1="124" y1="140" x2="120" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="196" y1="140" x2="200" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<path d="M258 72 L266 88 L274 72" stroke="#B09040" stroke-width="3" fill="none" stroke-linecap="round"/>
+<line x1="266" y1="57" x2="266" y2="88" stroke="#B09040" stroke-width="3" stroke-linecap="round" stroke-dasharray="5,3"/>
+<text x="274" y="82" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">45°</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Sentadilla asistida 0–45°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-clam_shell"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="10" y="150" width="300" height="8" rx="3" fill="#1A1B16"/>
+<ellipse cx="38" cy="125" rx="20" ry="17" fill="#C8A882"/>
+<rect x="52" y="115" width="90" height="20" rx="8" fill="#A8886A"/>
+<line x1="52" y1="122" x2="30" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="52" y1="128" x2="30" y2="150" stroke="#9A7855" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+<path d="M142 118 Q175 105 205 98" stroke="#B2B49C" stroke-width="11" stroke-linecap="round" fill="none"/>
+<ellipse cx="208" cy="97" rx="15" ry="9" fill="#9A7855"/>
+<ellipse cx="175" cy="108" rx="32" ry="10" fill="#B2B49C" opacity="0.3"/>
+<line x1="142" y1="125" x2="155" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<path d="M142 118 A42 42 0 0 1 155 150" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+<text x="162" y="135" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">40°</text>
+<path d="M240 82 L248 65 L256 82" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="248" y1="50" x2="248" y2="82" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GLÚTEO MEDIO · CADERA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Abducción lateral decúbito</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-flexion_rodilla"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="45" y="62" width="10" height="86" rx="4" fill="#2A2B26"/>
+<rect x="45" y="145" width="120" height="10" rx="3" fill="#2A2B26"/>
+<line x1="57" y1="155" x2="57" y2="183" stroke="#2A2B26" stroke-width="6" stroke-linecap="round"/>
+<line x1="155" y1="155" x2="155" y2="183" stroke="#2A2B26" stroke-width="6" stroke-linecap="round"/>
+<ellipse cx="105" cy="72" rx="17" ry="16" fill="#C8A882"/>
+<rect x="90" y="88" width="30" height="55" rx="7" fill="#A8886A"/>
+<line x1="90" y1="102" x2="62" y2="108" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<line x1="120" y1="102" x2="148" y2="108" stroke="#9A7855" stroke-width="5" stroke-linecap="round"/>
+<rect x="72" y="136" width="50" height="16" rx="7" fill="#9A7855"/>
+<rect x="122" y="133" width="85" height="16" rx="7" fill="#B2B49C" opacity="0.95"/>
+<ellipse cx="210" cy="141" rx="15" ry="9" fill="#9A7855"/>
+<ellipse cx="168" cy="141" rx="40" ry="9" fill="#B2B49C" opacity="0.3"/>
+<path d="M122 141 A52 52 0 0 1 168 108" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+<text x="165" y="105" fill="#B09040" font-size="14" font-family="monospace" font-weight="bold">60°</text>
+<path d="M250 105 L258 88 L266 105" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="258" y1="72" x2="258" y2="105" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Extensión rodilla 0–60°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-est_cuadriceps"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="258" y="40" width="10" height="143" rx="4" fill="#2A2B26" opacity="0.5"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="44" rx="7" fill="#A8886A"/>
+<line x1="146" y1="58" x2="112" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="58" x2="208" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M155 88 Q150 128 148 183" stroke="#B2B49C" stroke-width="10" stroke-linecap="round" fill="none"/>
+<path d="M165 88 Q172 105 178 115" stroke="#9A7855" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M178 115 Q180 135 176 150" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<ellipse cx="148" cy="183" rx="22" ry="6" fill="#9A7855"/>
+<circle cx="160" cy="88" r="22" fill="#B2B49C" opacity="0.12"/>
+<circle cx="264" cy="35" r="22" fill="none" stroke="#2A2B26" stroke-width="1.5"/>
+<text x="252" y="33" fill="#6A9E6C" font-size="11" font-family="monospace">30</text>
+<text x="255" y="46" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">PROPIOCEPCIÓN · TOBILLO</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Equilibrio monopodal</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-tandem"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="258" y="40" width="10" height="143" rx="4" fill="#2A2B26" opacity="0.5"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="44" rx="7" fill="#A8886A"/>
+<line x1="146" y1="58" x2="112" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="58" x2="208" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M155 88 Q150 128 148 183" stroke="#B2B49C" stroke-width="10" stroke-linecap="round" fill="none"/>
+<path d="M165 88 Q172 105 178 115" stroke="#9A7855" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M178 115 Q180 135 176 150" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<ellipse cx="148" cy="183" rx="22" ry="6" fill="#9A7855"/>
+<circle cx="160" cy="88" r="22" fill="#B2B49C" opacity="0.12"/>
+<circle cx="264" cy="35" r="22" fill="none" stroke="#2A2B26" stroke-width="1.5"/>
+<text x="252" y="33" fill="#6A9E6C" font-size="11" font-family="monospace">30</text>
+<text x="255" y="46" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">PROPIOCEPCIÓN · TOBILLO</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Equilibrio monopodal</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-rotacion_ext"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="68" y="58" width="184" height="10" rx="4" fill="#2A2B26"/>
+<line x1="98" y1="68" x2="98" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="234" y1="68" x2="234" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="166" cy="94" rx="18" ry="16" fill="#C8A882"/>
+<rect x="152" y="110" width="28" height="48" rx="7" fill="#A8886A"/>
+<line x1="152" y1="124" x2="122" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="180" y1="124" x2="205" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="154" y1="158" x2="148" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="176" y1="158" x2="182" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="122" y1="132" x2="116" y2="162" stroke="#B2B49C" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="115" cy="169" rx="13" ry="8" fill="#9A7855"/>
+<ellipse cx="116" cy="162" rx="20" ry="20" fill="none" stroke="#B2B49C" stroke-width="2" stroke-dasharray="5,3"/>
+<path d="M98 162 Q116 144 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<path d="M98 162 Q116 180 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<text x="90" y="140" fill="#B09040" font-size="9" font-family="monospace">círculos</text>
+<text x="88" y="153" fill="#5C5E55" font-size="9" font-family="monospace">pasivo</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">HOMBRO · MOVILIDAD PASIVA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Péndulo Codman</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-elev_lateral"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="68" y="58" width="184" height="10" rx="4" fill="#2A2B26"/>
+<line x1="98" y1="68" x2="98" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="234" y1="68" x2="234" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="166" cy="94" rx="18" ry="16" fill="#C8A882"/>
+<rect x="152" y="110" width="28" height="48" rx="7" fill="#A8886A"/>
+<line x1="152" y1="124" x2="122" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="180" y1="124" x2="205" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="154" y1="158" x2="148" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="176" y1="158" x2="182" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="122" y1="132" x2="116" y2="162" stroke="#B2B49C" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="115" cy="169" rx="13" ry="8" fill="#9A7855"/>
+<ellipse cx="116" cy="162" rx="20" ry="20" fill="none" stroke="#B2B49C" stroke-width="2" stroke-dasharray="5,3"/>
+<path d="M98 162 Q116 144 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<path d="M98 162 Q116 180 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<text x="90" y="140" fill="#B09040" font-size="9" font-family="monospace">círculos</text>
+<text x="88" y="153" fill="#5C5E55" font-size="9" font-family="monospace">pasivo</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">HOMBRO · MOVILIDAD PASIVA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Péndulo Codman</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-press_hombro"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="118" y="112" width="84" height="8" rx="2" fill="#2A2B26" opacity="0.6"/>
+<line x1="126" y1="120" x2="126" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="194" y1="120" x2="194" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="160" cy="32" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="48" width="28" height="46" rx="7" fill="#A8886A"/>
+<line x1="146" y1="62" x2="112" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="62" x2="208" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 94 Q132 118 124 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<path d="M170 94 Q188 118 196 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<ellipse cx="160" cy="94" rx="25" ry="14" fill="#B2B49C" opacity="0.25"/>
+<line x1="124" y1="140" x2="120" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="196" y1="140" x2="200" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<path d="M258 72 L266 88 L274 72" stroke="#B09040" stroke-width="3" fill="none" stroke-linecap="round"/>
+<line x1="266" y1="57" x2="266" y2="88" stroke="#B09040" stroke-width="3" stroke-linecap="round" stroke-dasharray="5,3"/>
+<text x="274" y="82" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">45°</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Sentadilla asistida 0–45°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-flexion_hombro"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="68" y="58" width="184" height="10" rx="4" fill="#2A2B26"/>
+<line x1="98" y1="68" x2="98" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="234" y1="68" x2="234" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="166" cy="94" rx="18" ry="16" fill="#C8A882"/>
+<rect x="152" y="110" width="28" height="48" rx="7" fill="#A8886A"/>
+<line x1="152" y1="124" x2="122" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="180" y1="124" x2="205" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="154" y1="158" x2="148" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="176" y1="158" x2="182" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="122" y1="132" x2="116" y2="162" stroke="#B2B49C" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="115" cy="169" rx="13" ry="8" fill="#9A7855"/>
+<ellipse cx="116" cy="162" rx="20" ry="20" fill="none" stroke="#B2B49C" stroke-width="2" stroke-dasharray="5,3"/>
+<path d="M98 162 Q116 144 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<path d="M98 162 Q116 180 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<text x="90" y="140" fill="#B09040" font-size="9" font-family="monospace">círculos</text>
+<text x="88" y="153" fill="#5C5E55" font-size="9" font-family="monospace">pasivo</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">HOMBRO · MOVILIDAD PASIVA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Péndulo Codman</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-est_hombro"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="258" y="40" width="10" height="143" rx="4" fill="#2A2B26" opacity="0.5"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="44" rx="7" fill="#A8886A"/>
+<line x1="146" y1="58" x2="112" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="58" x2="208" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M155 88 Q150 128 148 183" stroke="#B2B49C" stroke-width="10" stroke-linecap="round" fill="none"/>
+<path d="M165 88 Q172 105 178 115" stroke="#9A7855" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M178 115 Q180 135 176 150" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<ellipse cx="148" cy="183" rx="22" ry="6" fill="#9A7855"/>
+<circle cx="160" cy="88" r="22" fill="#B2B49C" opacity="0.12"/>
+<circle cx="264" cy="35" r="22" fill="none" stroke="#2A2B26" stroke-width="1.5"/>
+<text x="252" y="33" fill="#6A9E6C" font-size="11" font-family="monospace">30</text>
+<text x="255" y="46" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">PROPIOCEPCIÓN · TOBILLO</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Equilibrio monopodal</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-wall_slides"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="68" y="58" width="184" height="10" rx="4" fill="#2A2B26"/>
+<line x1="98" y1="68" x2="98" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="234" y1="68" x2="234" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="166" cy="94" rx="18" ry="16" fill="#C8A882"/>
+<rect x="152" y="110" width="28" height="48" rx="7" fill="#A8886A"/>
+<line x1="152" y1="124" x2="122" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="180" y1="124" x2="205" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="154" y1="158" x2="148" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="176" y1="158" x2="182" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="122" y1="132" x2="116" y2="162" stroke="#B2B49C" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="115" cy="169" rx="13" ry="8" fill="#9A7855"/>
+<ellipse cx="116" cy="162" rx="20" ry="20" fill="none" stroke="#B2B49C" stroke-width="2" stroke-dasharray="5,3"/>
+<path d="M98 162 Q116 144 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<path d="M98 162 Q116 180 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<text x="90" y="140" fill="#B09040" font-size="9" font-family="monospace">círculos</text>
+<text x="88" y="153" fill="#5C5E55" font-size="9" font-family="monospace">pasivo</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">HOMBRO · MOVILIDAD PASIVA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Péndulo Codman</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-remo"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="0" y="178" width="320" height="22" fill="#1A1B16"/>
+<ellipse cx="40" cy="95" rx="13" ry="12" fill="#C8A882"/>
+<ellipse cx="45" cy="108" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="45" cy="142" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="125" cy="108" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<rect x="45" y="99" width="80" height="20" rx="8" fill="#B2B49C" opacity="0.85"/>
+<path d="M45 103 Q25 88 14 80" stroke="#6A9E6C" stroke-width="9" stroke-linecap="round" fill="none"/>
+<ellipse cx="11" cy="78" rx="9" ry="6" fill="#9A7855"/>
+<line x1="125" y1="108" x2="128" y2="140" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="128" cy="142" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<path d="M125 100 Q162 86 198 80" stroke="#6A9E6C" stroke-width="9" stroke-linecap="round" fill="none"/>
+<ellipse cx="202" cy="78" rx="12" ry="7" fill="#9A7855"/>
+<line x1="45" y1="108" x2="125" y2="108" stroke="#B09040" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>
+<text x="58" y="103" fill="#B09040" font-size="9" font-family="monospace">columna neutral</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CORE · GLÚTEOS · ESTABILIDAD</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Bird-Dog</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-press_pecho"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="15" y="170" width="290" height="8" rx="3" fill="#1A1B16"/>
+<rect x="28" y="152" width="32" height="10" rx="3" fill="#9A7855"/>
+<ellipse cx="22" cy="142" rx="15" ry="13" fill="#C8A882"/>
+<rect x="56" y="140" width="100" height="20" rx="8" fill="#B2B49C" opacity="0.9"/>
+<ellipse cx="200" cy="148" rx="12" ry="12" fill="#C8A882" opacity="0.8"/>
+<ellipse cx="220" cy="148" rx="12" ry="12" fill="#C8A882" opacity="0.8"/>
+<line x1="200" y1="158" x2="196" y2="170" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="220" y1="158" x2="224" y2="170" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="158" cy="146" rx="50" ry="11" fill="#B2B49C" opacity="0.2"/>
+<line x1="22" y1="144" x2="213" y2="144" stroke="#B09040" stroke-width="1.5" stroke-dasharray="7,4" opacity="0.7"/>
+<text x="68" y="136" fill="#B09040" font-size="9" font-family="monospace">línea recta</text>
+<circle cx="278" cy="42" r="22" fill="none" stroke="#2A2B26" stroke-width="2"/>
+<text x="266" y="40" fill="#6A9E6C" font-size="12" font-family="monospace" font-weight="bold">30</text>
+<text x="270" y="54" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CORE · ABDOMINALES</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Plancha en rodillas</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-movilizacion_gh"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="68" y="58" width="184" height="10" rx="4" fill="#2A2B26"/>
+<line x1="98" y1="68" x2="98" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="234" y1="68" x2="234" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="166" cy="94" rx="18" ry="16" fill="#C8A882"/>
+<rect x="152" y="110" width="28" height="48" rx="7" fill="#A8886A"/>
+<line x1="152" y1="124" x2="122" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="180" y1="124" x2="205" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="154" y1="158" x2="148" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="176" y1="158" x2="182" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="122" y1="132" x2="116" y2="162" stroke="#B2B49C" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="115" cy="169" rx="13" ry="8" fill="#9A7855"/>
+<ellipse cx="116" cy="162" rx="20" ry="20" fill="none" stroke="#B2B49C" stroke-width="2" stroke-dasharray="5,3"/>
+<path d="M98 162 Q116 144 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<path d="M98 162 Q116 180 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<text x="90" y="140" fill="#B09040" font-size="9" font-family="monospace">círculos</text>
+<text x="88" y="153" fill="#5C5E55" font-size="9" font-family="monospace">pasivo</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">HOMBRO · MOVILIDAD PASIVA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Péndulo Codman</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-dead_bug"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="15" y="170" width="290" height="8" rx="3" fill="#1A1B16"/>
+<rect x="28" y="152" width="32" height="10" rx="3" fill="#9A7855"/>
+<ellipse cx="22" cy="142" rx="15" ry="13" fill="#C8A882"/>
+<rect x="56" y="140" width="100" height="20" rx="8" fill="#B2B49C" opacity="0.9"/>
+<ellipse cx="200" cy="148" rx="12" ry="12" fill="#C8A882" opacity="0.8"/>
+<ellipse cx="220" cy="148" rx="12" ry="12" fill="#C8A882" opacity="0.8"/>
+<line x1="200" y1="158" x2="196" y2="170" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="220" y1="158" x2="224" y2="170" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="158" cy="146" rx="50" ry="11" fill="#B2B49C" opacity="0.2"/>
+<line x1="22" y1="144" x2="213" y2="144" stroke="#B09040" stroke-width="1.5" stroke-dasharray="7,4" opacity="0.7"/>
+<text x="68" y="136" fill="#B09040" font-size="9" font-family="monospace">línea recta</text>
+<circle cx="278" cy="42" r="22" fill="none" stroke="#2A2B26" stroke-width="2"/>
+<text x="266" y="40" fill="#6A9E6C" font-size="12" font-family="monospace" font-weight="bold">30</text>
+<text x="270" y="54" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CORE · ABDOMINALES</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Plancha en rodillas</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-ext_lumbar"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="0" y="178" width="320" height="22" fill="#1A1B16"/>
+<ellipse cx="40" cy="95" rx="13" ry="12" fill="#C8A882"/>
+<ellipse cx="45" cy="108" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="45" cy="142" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<ellipse cx="125" cy="108" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<rect x="45" y="99" width="80" height="20" rx="8" fill="#B2B49C" opacity="0.85"/>
+<path d="M45 103 Q25 88 14 80" stroke="#6A9E6C" stroke-width="9" stroke-linecap="round" fill="none"/>
+<ellipse cx="11" cy="78" rx="9" ry="6" fill="#9A7855"/>
+<line x1="125" y1="108" x2="128" y2="140" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="128" cy="142" rx="7" ry="7" fill="#C8A882" opacity="0.7"/>
+<path d="M125 100 Q162 86 198 80" stroke="#6A9E6C" stroke-width="9" stroke-linecap="round" fill="none"/>
+<ellipse cx="202" cy="78" rx="12" ry="7" fill="#9A7855"/>
+<line x1="45" y1="108" x2="125" y2="108" stroke="#B09040" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>
+<text x="58" y="103" fill="#B09040" font-size="9" font-family="monospace">columna neutral</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CORE · GLÚTEOS · ESTABILIDAD</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Bird-Dog</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-cervical"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<ellipse cx="160" cy="50" rx="18" ry="17" fill="#C8A882"/>
+<rect x="146" y="67" width="28" height="50" rx="7" fill="#A8886A"/>
+<line x1="148" y1="78" x2="118" y2="86" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="78" x2="204" y2="86" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<rect x="136" y="115" width="48" height="40" rx="8" fill="#2A2B26" opacity="0.4"/>
+<line x1="148" y1="115" x2="144" y2="158" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="172" y1="115" x2="176" y2="158" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<ellipse cx="160" cy="90" rx="24" ry="18" fill="#B2B49C" opacity="0.55"/>
+<ellipse cx="160" cy="106" rx="18" ry="10" fill="#B09040" opacity="0.35"/>
+<text x="82" y="84" fill="#6A9E6C" font-size="10" font-family="monospace">inhala</text>
+<text x="196" y="84" fill="#B09040" font-size="10" font-family="monospace">exhala</text>
+<path d="M118 70 Q106 90 118 110" stroke="#6A9E6C" stroke-width="2.5" fill="none" stroke-dasharray="4,2"/>
+<path d="M202 70 Q214 90 202 110" stroke="#B09040" stroke-width="2.5" fill="none" stroke-dasharray="4,2"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">DIAFRAGMA · RELAJACIÓN</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Respiración diafragmática</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-est_isquio"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="10" y="150" width="300" height="8" rx="3" fill="#1A1B16"/>
+<ellipse cx="38" cy="125" rx="20" ry="17" fill="#C8A882"/>
+<rect x="52" y="115" width="90" height="20" rx="8" fill="#A8886A"/>
+<line x1="52" y1="122" x2="30" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="52" y1="128" x2="30" y2="150" stroke="#9A7855" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+<path d="M142 118 Q175 105 205 98" stroke="#B2B49C" stroke-width="11" stroke-linecap="round" fill="none"/>
+<ellipse cx="208" cy="97" rx="15" ry="9" fill="#9A7855"/>
+<ellipse cx="175" cy="108" rx="32" ry="10" fill="#B2B49C" opacity="0.3"/>
+<line x1="142" y1="125" x2="155" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<path d="M142 118 A42 42 0 0 1 155 150" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+<text x="162" y="135" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">40°</text>
+<path d="M240 82 L248 65 L256 82" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="248" y1="50" x2="248" y2="82" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GLÚTEO MEDIO · CADERA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Abducción lateral decúbito</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-ext_cadera"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="10" y="150" width="300" height="8" rx="3" fill="#1A1B16"/>
+<ellipse cx="38" cy="125" rx="20" ry="17" fill="#C8A882"/>
+<rect x="52" y="115" width="90" height="20" rx="8" fill="#A8886A"/>
+<line x1="52" y1="122" x2="30" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="52" y1="128" x2="30" y2="150" stroke="#9A7855" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+<path d="M142 118 Q175 105 205 98" stroke="#B2B49C" stroke-width="11" stroke-linecap="round" fill="none"/>
+<ellipse cx="208" cy="97" rx="15" ry="9" fill="#9A7855"/>
+<ellipse cx="175" cy="108" rx="32" ry="10" fill="#B2B49C" opacity="0.3"/>
+<line x1="142" y1="125" x2="155" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<path d="M142 118 A42 42 0 0 1 155 150" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+<text x="162" y="135" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">40°</text>
+<path d="M240 82 L248 65 L256 82" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="248" y1="50" x2="248" y2="82" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GLÚTEO MEDIO · CADERA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Abducción lateral decúbito</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-piriforme"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="10" y="150" width="300" height="8" rx="3" fill="#1A1B16"/>
+<ellipse cx="38" cy="125" rx="20" ry="17" fill="#C8A882"/>
+<rect x="52" y="115" width="90" height="20" rx="8" fill="#A8886A"/>
+<line x1="52" y1="122" x2="30" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="52" y1="128" x2="30" y2="150" stroke="#9A7855" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+<path d="M142 118 Q175 105 205 98" stroke="#B2B49C" stroke-width="11" stroke-linecap="round" fill="none"/>
+<ellipse cx="208" cy="97" rx="15" ry="9" fill="#9A7855"/>
+<ellipse cx="175" cy="108" rx="32" ry="10" fill="#B2B49C" opacity="0.3"/>
+<line x1="142" y1="125" x2="155" y2="150" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<path d="M142 118 A42 42 0 0 1 155 150" stroke="#B09040" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+<text x="162" y="135" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">40°</text>
+<path d="M240 82 L248 65 L256 82" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="248" y1="50" x2="248" y2="82" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GLÚTEO MEDIO · CADERA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Abducción lateral decúbito</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-marcha_am"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="258" y="40" width="10" height="143" rx="4" fill="#2A2B26" opacity="0.5"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="44" rx="7" fill="#A8886A"/>
+<line x1="146" y1="58" x2="112" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="58" x2="208" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M155 88 Q150 128 148 183" stroke="#B2B49C" stroke-width="10" stroke-linecap="round" fill="none"/>
+<path d="M165 88 Q172 105 178 115" stroke="#9A7855" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M178 115 Q180 135 176 150" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<ellipse cx="148" cy="183" rx="22" ry="6" fill="#9A7855"/>
+<circle cx="160" cy="88" r="22" fill="#B2B49C" opacity="0.12"/>
+<circle cx="264" cy="35" r="22" fill="none" stroke="#2A2B26" stroke-width="1.5"/>
+<text x="252" y="33" fill="#6A9E6C" font-size="11" font-family="monospace">30</text>
+<text x="255" y="46" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">PROPIOCEPCIÓN · TOBILLO</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Equilibrio monopodal</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-alfabeto"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="258" y="40" width="10" height="143" rx="4" fill="#2A2B26" opacity="0.5"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="44" rx="7" fill="#A8886A"/>
+<line x1="146" y1="58" x2="112" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="58" x2="208" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M155 88 Q150 128 148 183" stroke="#B2B49C" stroke-width="10" stroke-linecap="round" fill="none"/>
+<path d="M165 88 Q172 105 178 115" stroke="#9A7855" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M178 115 Q180 135 176 150" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<ellipse cx="148" cy="183" rx="22" ry="6" fill="#9A7855"/>
+<circle cx="160" cy="88" r="22" fill="#B2B49C" opacity="0.12"/>
+<circle cx="264" cy="35" r="22" fill="none" stroke="#2A2B26" stroke-width="1.5"/>
+<text x="252" y="33" fill="#6A9E6C" font-size="11" font-family="monospace">30</text>
+<text x="255" y="46" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">PROPIOCEPCIÓN · TOBILLO</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Equilibrio monopodal</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-banda_tobillo"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<ellipse cx="155" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="141" y="44" width="28" height="44" rx="7" fill="#A8886A"/>
+<line x1="141" y1="58" x2="110" y2="66" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="169" y1="58" x2="196" y2="66" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 88 Q143 128 138 165" stroke="#9A7855" stroke-width="9" stroke-linecap="round" fill="none"/>
+<path d="M160 88 Q167 128 172 165" stroke="#9A7855" stroke-width="9" stroke-linecap="round" fill="none"/>
+<ellipse cx="138" cy="168" rx="20" ry="8" fill="#B2B49C" opacity="0.8"/>
+<ellipse cx="172" cy="168" rx="20" ry="8" fill="#B2B49C" opacity="0.8"/>
+<ellipse cx="155" cy="160" rx="28" ry="14" fill="#B2B49C" opacity="0.25"/>
+<text x="88" y="162" fill="#B2B49C" font-size="9" font-family="monospace">PUNTILLAS</text>
+<path d="M238" y=""/>
+<path d="M236 90 L244 73 L252 90" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="244" y1="57" x2="244" y2="90" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<text x="222" y="108" fill="#5C5E55" font-size="9" font-family="monospace">bajar 3s</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">GASTROCNEMIO · SÓLEO</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Elevación talones bilateral</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-est_pantorrilla"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="258" y="40" width="10" height="143" rx="4" fill="#2A2B26" opacity="0.5"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="44" rx="7" fill="#A8886A"/>
+<line x1="146" y1="58" x2="112" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="58" x2="208" y2="68" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M155 88 Q150 128 148 183" stroke="#B2B49C" stroke-width="10" stroke-linecap="round" fill="none"/>
+<path d="M165 88 Q172 105 178 115" stroke="#9A7855" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M178 115 Q180 135 176 150" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<ellipse cx="148" cy="183" rx="22" ry="6" fill="#9A7855"/>
+<circle cx="160" cy="88" r="22" fill="#B2B49C" opacity="0.12"/>
+<circle cx="264" cy="35" r="22" fill="none" stroke="#2A2B26" stroke-width="1.5"/>
+<text x="252" y="33" fill="#6A9E6C" font-size="11" font-family="monospace">30</text>
+<text x="255" y="46" fill="#5C5E55" font-size="9" font-family="monospace">seg</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">PROPIOCEPCIÓN · TOBILLO</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Equilibrio monopodal</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-squat_jump"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="118" y="112" width="84" height="8" rx="2" fill="#2A2B26" opacity="0.6"/>
+<line x1="126" y1="120" x2="126" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="194" y1="120" x2="194" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="160" cy="32" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="48" width="28" height="46" rx="7" fill="#A8886A"/>
+<line x1="146" y1="62" x2="112" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="62" x2="208" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 94 Q132 118 124 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<path d="M170 94 Q188 118 196 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<ellipse cx="160" cy="94" rx="25" ry="14" fill="#B2B49C" opacity="0.25"/>
+<line x1="124" y1="140" x2="120" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="196" y1="140" x2="200" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<path d="M258 72 L266 88 L274 72" stroke="#B09040" stroke-width="3" fill="none" stroke-linecap="round"/>
+<line x1="266" y1="57" x2="266" y2="88" stroke="#B09040" stroke-width="3" stroke-linecap="round" stroke-dasharray="5,3"/>
+<text x="274" y="82" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">45°</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Sentadilla asistida 0–45°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-carrera"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="34" rx="7" fill="#A8886A"/>
+<line x1="146" y1="56" x2="118" y2="63" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="56" x2="202" y2="63" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M152 78 Q138 108 130 135" stroke="#B2B49C" stroke-width="11" stroke-linecap="round" fill="none"/>
+<path d="M130 135 Q128 158 126 183" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<path d="M168 78 Q180 100 188 118" stroke="#9A7855" stroke-width="9" stroke-linecap="round" fill="none"/>
+<path d="M188 118 Q190 150 187 183" stroke="#9A7855" stroke-width="6" stroke-linecap="round" fill="none"/>
+<ellipse cx="152" cy="78" rx="22" ry="14" fill="#B2B49C" opacity="0.3"/>
+<circle cx="188" cy="118" r="9" fill="none" stroke="#B09040" stroke-width="2" stroke-dasharray="3,2"/>
+<text x="196" y="122" fill="#B09040" font-size="9" font-family="monospace">~suelo</text>
+<path d="M252 62 L260 46 L268 62" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="260" y1="30" x2="260" y2="62" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Zancada / Lunge</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-chair_stand"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="118" y="112" width="84" height="8" rx="2" fill="#2A2B26" opacity="0.6"/>
+<line x1="126" y1="120" x2="126" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="194" y1="120" x2="194" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="160" cy="32" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="48" width="28" height="46" rx="7" fill="#A8886A"/>
+<line x1="146" y1="62" x2="112" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="62" x2="208" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 94 Q132 118 124 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<path d="M170 94 Q188 118 196 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<ellipse cx="160" cy="94" rx="25" ry="14" fill="#B2B49C" opacity="0.25"/>
+<line x1="124" y1="140" x2="120" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="196" y1="140" x2="200" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<path d="M258 72 L266 88 L274 72" stroke="#B09040" stroke-width="3" fill="none" stroke-linecap="round"/>
+<line x1="266" y1="57" x2="266" y2="88" stroke="#B09040" stroke-width="3" stroke-linecap="round" stroke-dasharray="5,3"/>
+<text x="274" y="82" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">45°</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Sentadilla asistida 0–45°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-core_silla"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<ellipse cx="160" cy="50" rx="18" ry="17" fill="#C8A882"/>
+<rect x="146" y="67" width="28" height="50" rx="7" fill="#A8886A"/>
+<line x1="148" y1="78" x2="118" y2="86" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="78" x2="204" y2="86" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<rect x="136" y="115" width="48" height="40" rx="8" fill="#2A2B26" opacity="0.4"/>
+<line x1="148" y1="115" x2="144" y2="158" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="172" y1="115" x2="176" y2="158" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<ellipse cx="160" cy="90" rx="24" ry="18" fill="#B2B49C" opacity="0.55"/>
+<ellipse cx="160" cy="106" rx="18" ry="10" fill="#B09040" opacity="0.35"/>
+<text x="82" y="84" fill="#6A9E6C" font-size="10" font-family="monospace">inhala</text>
+<text x="196" y="84" fill="#B09040" font-size="10" font-family="monospace">exhala</text>
+<path d="M118 70 Q106 90 118 110" stroke="#6A9E6C" stroke-width="2.5" fill="none" stroke-dasharray="4,2"/>
+<path d="M202 70 Q214 90 202 110" stroke="#B09040" stroke-width="2.5" fill="none" stroke-dasharray="4,2"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">DIAFRAGMA · RELAJACIÓN</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Respiración diafragmática</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-curl_bicep"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/>
+<rect x="68" y="58" width="184" height="10" rx="4" fill="#2A2B26"/>
+<line x1="98" y1="68" x2="98" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="234" y1="68" x2="234" y2="90" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="166" cy="94" rx="18" ry="16" fill="#C8A882"/>
+<rect x="152" y="110" width="28" height="48" rx="7" fill="#A8886A"/>
+<line x1="152" y1="124" x2="122" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="180" y1="124" x2="205" y2="132" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="154" y1="158" x2="148" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="176" y1="158" x2="182" y2="183" stroke="#9A7855" stroke-width="8" stroke-linecap="round"/>
+<line x1="122" y1="132" x2="116" y2="162" stroke="#B2B49C" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="115" cy="169" rx="13" ry="8" fill="#9A7855"/>
+<ellipse cx="116" cy="162" rx="20" ry="20" fill="none" stroke="#B2B49C" stroke-width="2" stroke-dasharray="5,3"/>
+<path d="M98 162 Q116 144 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<path d="M98 162 Q116 180 134 162" stroke="#B09040" stroke-width="2" fill="none"/>
+<text x="90" y="140" fill="#B09040" font-size="9" font-family="monospace">círculos</text>
+<text x="88" y="153" fill="#5C5E55" font-size="9" font-family="monospace">pasivo</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">HOMBRO · MOVILIDAD PASIVA</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Péndulo Codman</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-caminata"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<ellipse cx="160" cy="28" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="44" width="28" height="34" rx="7" fill="#A8886A"/>
+<line x1="146" y1="56" x2="118" y2="63" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="56" x2="202" y2="63" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M152 78 Q138 108 130 135" stroke="#B2B49C" stroke-width="11" stroke-linecap="round" fill="none"/>
+<path d="M130 135 Q128 158 126 183" stroke="#9A7855" stroke-width="7" stroke-linecap="round" fill="none"/>
+<path d="M168 78 Q180 100 188 118" stroke="#9A7855" stroke-width="9" stroke-linecap="round" fill="none"/>
+<path d="M188 118 Q190 150 187 183" stroke="#9A7855" stroke-width="6" stroke-linecap="round" fill="none"/>
+<ellipse cx="152" cy="78" rx="22" ry="14" fill="#B2B49C" opacity="0.3"/>
+<circle cx="188" cy="118" r="9" fill="none" stroke="#B09040" stroke-width="2" stroke-dasharray="3,2"/>
+<text x="196" y="122" fill="#B09040" font-size="9" font-family="monospace">~suelo</text>
+<path d="M252 62 L260 46 L268 62" stroke="#6A9E6C" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<line x1="260" y1="30" x2="260" y2="62" stroke="#6A9E6C" stroke-width="3.5" stroke-linecap="round"/>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Zancada / Lunge</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+  <div id="tpl-default"><svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#0C0D0A"/><rect x="0" y="183" width="320" height="17" fill="#1A1B16"/>
+<rect x="118" y="112" width="84" height="8" rx="2" fill="#2A2B26" opacity="0.6"/>
+<line x1="126" y1="120" x2="126" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<line x1="194" y1="120" x2="194" y2="183" stroke="#2A2B26" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="160" cy="32" rx="17" ry="16" fill="#C8A882"/>
+<rect x="146" y="48" width="28" height="46" rx="7" fill="#A8886A"/>
+<line x1="146" y1="62" x2="112" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<line x1="174" y1="62" x2="208" y2="58" stroke="#9A7855" stroke-width="6" stroke-linecap="round"/>
+<path d="M150 94 Q132 118 124 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<path d="M170 94 Q188 118 196 140" stroke="#B2B49C" stroke-width="12" stroke-linecap="round" fill="none"/>
+<ellipse cx="160" cy="94" rx="25" ry="14" fill="#B2B49C" opacity="0.25"/>
+<line x1="124" y1="140" x2="120" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<line x1="196" y1="140" x2="200" y2="183" stroke="#9A7855" stroke-width="7" stroke-linecap="round"/>
+<path d="M258 72 L266 88 L274 72" stroke="#B09040" stroke-width="3" fill="none" stroke-linecap="round"/>
+<line x1="266" y1="57" x2="266" y2="88" stroke="#B09040" stroke-width="3" stroke-linecap="round" stroke-dasharray="5,3"/>
+<text x="274" y="82" fill="#B09040" font-size="13" font-family="monospace" font-weight="bold">45°</text>
+<rect x="0" y="168" width="320" height="32" fill="#0D0E0B" opacity="0.88"/><text x="12" y="183" fill="#B2B49C" font-size="11" font-family="monospace" font-weight="bold">CUÁDRICEPS · GLÚTEOS</text><text x="12" y="196" fill="#5C5E55" font-size="9" font-family="monospace">Sentadilla asistida 0–45°</text><text x="265" y="183" fill="#6A9E6C" font-size="10" font-family="monospace">Ev. A</text></svg></div>
+</div>
+</body>
+</html>
